@@ -1,0 +1,28 @@
+/* styles.css */
+/* @import 'tailwindcss/base'; */
+/* @import 'tailwindcss/components'; */
+@import 'tailwindcss/utilities';
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  color-scheme: light dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  @apply mx-auto min-h-screen;
+}
+
+h1 {
+  @apply text-2xl;
+}
+
+nav a {
+  @apply font-semibold no-underline p-1 border-transparent;
+  @apply border-0 border-b-2 hover:border-primary border-solid;
+}
