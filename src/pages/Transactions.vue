@@ -1,5 +1,10 @@
 <template>
   <h1>Transactions</h1>
+  <TransactionModal
+    ref="modal"
+    @handle-Save="handleSave"
+  />
+  
   <div class="flex gap-10 justify-between items-center mb-4 -mt-2">
     <p align="center">
       {{ checkedRowKeys.length === 0  ? '' :
@@ -12,7 +17,9 @@
       <n-button type="default" :disabled="checkedRowKeys.length <= 1">
         Edit Multiple
       </n-button>
-      <transaction-modal @new-transaction="addNewTransaction" title="Add Transaction" :transaction="{}"/>
+      <n-button type="primary" @click="openModal('Add Transaction')">
+        Add Transaction
+      </n-button>
       <n-button @click="exportToCSV" role="button" aria-label="Export to CSV" type="primary" ghost>
         <Icon icon="carbon:download" aria-hidden="true"/>
       </n-button>
@@ -39,11 +46,14 @@ import { NTag, NButton, useMessage } from "naive-ui";
 import TransactionModal from "@/components/TransactionModal.vue";
 
 const message = useMessage();
+const modal = ref(null);
+const transaction = ref(null);
 
-
-const sendMail = (rowData) => {
-  console.log('hello');
+const openModal = (currentTitle, transaction) => {
+  // transaction.value = data ? data : null;
+  modal.value.openModal(currentTitle, transaction);
 };
+
 
 const accountTypes = {
   0: 'Checking',
@@ -106,7 +116,7 @@ const getRandomDate = () => {
 };
 
 let data = reactive(Array.from({ length: 10 }).map((_, index) => ({
-  key: index,
+  key: index + 1,
   date: getRandomDate(),
   amount: getRandomInt(1000),
   description: `This is a description and it is so so so so long ${index + 1}`,
@@ -191,7 +201,7 @@ const columns = [
         NButton,
         {
           size: "small",
-          onClick: () => sendMail(row)
+          onClick: () => { openModal("Edit Transaction", row) }
         },
         { default: () => "Edit" }
       );
@@ -238,15 +248,35 @@ const exportToCSV = () => {
   document.body.removeChild(link);
 };
 
-
-const addNewTransaction = async (newTransaction) => { 
+const addTransaction = (newTransaction) => {
+  // const options =  { style: 'currency', currency: 'USD' }
+  // const amount = new Intl.NumberFormat('en-US', options ).format(newTransaction.amount);
+  // message.success(
+  //   `${newTransaction.description} of ${amount} added successfully!`,
+  //   { duration: 5e3 }
+  // );
   data.push(newTransaction);
-  const options =  { style: 'currency', currency: 'USD' }
-  const amount = new Intl.NumberFormat('en-US', options ).format(newTransaction.amount);
   message.success(
-    `${newTransaction.description} of ${amount} added successfully!`,
+    `${newTransaction.description} added successfully!`,
     { duration: 5e3 }
   );
+};
+
+const editTransaction = (newTransaction) => {
+  const index = data.findIndex((row) => row.key === newTransaction.key);
+  data[index] = {...newTransaction};
+  message.success(
+    `${newTransaction.description} updated successfully!`,
+    { duration: 5e3 }
+  );
+};
+
+const handleSave = async (newTransaction, editing) => { 
+  if (editing) {
+    editTransaction(newTransaction);
+  } else (
+    addTransaction(newTransaction)
+  )
 };
 
 </script>

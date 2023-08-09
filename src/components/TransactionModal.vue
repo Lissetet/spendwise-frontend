@@ -1,7 +1,4 @@
 <template>
-  <n-button @click="showTransactionModal = true" type="primary">
-    {{ title }}
-  </n-button>
   <n-modal v-model:show="showTransactionModal">
     <n-card
       style="width: 600px"
@@ -72,15 +69,16 @@
 </template>
 
 <script setup>
-import { ref, defineEmits, defineProps } from "vue";
+import { ref, defineEmits, defineExpose } from "vue";
 import { Icon } from '@iconify/vue';
 
 const emit = defineEmits(['new-transaction']);
-const props = defineProps(['title', 'transaction']);
-
 const showTransactionModal = ref(false);
+const title = ref(null);
+const editing = ref(false);
 const formRef = ref(null);
 const emptyData = {
+  key: null,
   descriptionValue: null,
   typeValue: null,
   categoryValue: null,
@@ -88,7 +86,31 @@ const emptyData = {
   amountValue: null,
   accountValue: null
 };
-const model = ref(props.transaction? props.transaction: emptyData);
+const model = ref({...emptyData});
+
+const openModal = (modalTitle, transaction) => {
+  title.value = modalTitle;
+  editing.value = !!transaction;
+  if (transaction) {
+    model.value = {
+      key: transaction.key,
+      descriptionValue: transaction.description,
+      typeValue: transaction.type,
+      categoryValue: transaction.category,
+      dateValue: transaction.date.getTime(),
+      amountValue: transaction.amount,
+      accountValue: transaction.account
+    };
+  } else {
+    model.value = {...emptyData};
+  }
+  showTransactionModal.value = true;
+};
+const closeModal = () => {
+  showTransactionModal.value = false;
+}
+
+defineExpose({ openModal, closeModal });
 
 const getOptions = (options) => {
   return options.map((v) => {
@@ -164,7 +186,8 @@ const handleValidateButtonClick = (e) => {
   e.preventDefault();
   formRef.value?.validate((errors) => {
     if (!errors) {
-      emit('new-transaction', {
+      console.log(model.value.key)
+      emit('handle-save', {
         key: model.value.key || Date.now(),
         date: new Date(model.value.dateValue),
         description: model.value.descriptionValue,
@@ -172,13 +195,13 @@ const handleValidateButtonClick = (e) => {
         type: model.value.typeValue,
         account: model.value.accountValue,
         amount: model.value.amountValue
-      });
-      model.value = emptyData;
-      showTransactionModal.value = false; 
-    } else {
+      }, editing.value);
+    } 
+    else {
       console.log(errors);
     }
   });
+  closeModal();
 };
 
 </script>
