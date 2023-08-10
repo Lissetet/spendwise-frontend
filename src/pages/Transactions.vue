@@ -4,18 +4,16 @@
     ref="modal"
     @handle-Save="handleSave"
   />
-  
   <div class="flex gap-10 justify-between items-center mb-4 -mt-2">
     <p align="center">
       {{ checkedRowKeys.length === 0  ? '' :
       `You have selected ${ checkedRowKeys.length } row${
         checkedRowKeys.length === 1 ? '' : 's'}`
       }}
-      
     </p>
     <div class="flex gap-4">
-      <n-button type="default" :disabled="checkedRowKeys.length <= 1">
-        Edit Multiple
+      <n-button :disabled="!multipleChecked" @click="handleDeleteMultiple">
+        Delete Multiple
       </n-button>
       <n-button type="primary" @click="openModal('Add Transaction')">
         Add Transaction
@@ -42,18 +40,18 @@
 <script setup>
 import { h, reactive, ref } from "vue";
 import { Icon } from "@iconify/vue";
-import { NTag, NButton, useMessage } from "naive-ui";
+import { NTag, NButton, NDropdown, useMessage, useDialog } from "naive-ui";
 import TransactionModal from "@/components/TransactionModal.vue";
 
 const message = useMessage();
+const dialog = useDialog();
 const modal = ref(null);
-const transaction = ref(null);
 
-const openModal = (currentTitle, transaction) => {
-  // transaction.value = data ? data : null;
-  modal.value.openModal(currentTitle, transaction);
+const multipleChecked = ref(false);
+
+const openModal = (currentTitle, transaction, multiple=false) => {
+  modal.value.openModal(currentTitle, transaction, multiple);
 };
-
 
 const accountTypes = {
   0: 'Checking',
@@ -64,9 +62,9 @@ const accountTypes = {
 }
 
 const types = {
-  0: 'income',
-  1: 'expense',
-  2: 'other', 
+  0: 'Income',
+  1: 'Expense',
+  2: 'Other', 
 }
 
 const categoryTypes = {
@@ -90,10 +88,6 @@ const categoryTypes = {
   17: 'Entertainment',
   18: 'Clothing',
   19: 'Education',
-}
-
-const capitalize = (str) => {
-  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 const getFilterOptions = (obj) => {
@@ -163,7 +157,11 @@ const columns = [
     key: "type",
     width: 110,
     render(row) {
-      return h(NTag, { type: row.type === 'income' ? 'success' : row.type === 'expense' ? 'error' : 'default' }, { default: () => capitalize(row.type) })
+      return h(
+        NTag, 
+        { type: row.type === 'Income' ? 'success' : row.type === 'Expense' ? 'error' : 'default' }, 
+        { default: () => row.type }
+      )
     },
     filterOptions: getFilterOptions(types),
     filter: (value, row) => {
@@ -193,20 +191,37 @@ const columns = [
   },
   {
     title: "",
-    key: "actions",
+    key: "options",
     align: "center",
-    width: 75,
+    width: 50,
     render(row) {
+      const renderIcon = icon => () => h(Icon, { icon });
+      const handleDropdownSelection = (selectedKey) => {
+        selectedKey === 'edit' ? openModal("Edit Transaction", row) : handleDelete(row.key);
+      };
+
       return h(
-        NButton,
+        NDropdown,
         {
-          size: "small",
-          onClick: () => { openModal("Edit Transaction", row) }
+          options: [
+            { label: 'Edit', key: 'edit', icon: renderIcon('material-symbols:edit') },
+            { label: 'Delete', key: 'delete', icon: renderIcon('material-symbols:delete') },
+          ],
+          placement: 'left-start',
+          onSelect: handleDropdownSelection,
         },
-        { default: () => "Edit" }
-      );
+        {
+          default: () => [
+            h(
+              NButton,
+              { text: true },
+              { default: renderIcon('material-symbols:settings')}
+            )
+          ]
+        }
+      )
     }
-  }
+  },
 ];
 
 const pagination = reactive({
@@ -229,6 +244,7 @@ const pagination = reactive({
 const checkedRowKeys = ref([]);
 const handleCheck = (rowKeys) => {
   checkedRowKeys.value = rowKeys;
+  multipleChecked.value = rowKeys.length > 1;
 };
 
 const exportToCSV = () => {
@@ -249,12 +265,6 @@ const exportToCSV = () => {
 };
 
 const addTransaction = (newTransaction) => {
-  // const options =  { style: 'currency', currency: 'USD' }
-  // const amount = new Intl.NumberFormat('en-US', options ).format(newTransaction.amount);
-  // message.success(
-  //   `${newTransaction.description} of ${amount} added successfully!`,
-  //   { duration: 5e3 }
-  // );
   data.push(newTransaction);
   message.success(
     `${newTransaction.description} added successfully!`,
@@ -271,8 +281,63 @@ const editTransaction = (newTransaction) => {
   );
 };
 
-const handleSave = async (newTransaction, editing) => { 
-  if (editing) {
+const deleteTransaction = (key, displayMessage=true) => {
+  const index = data.findIndex((row) => row.key === key);
+  const deletedTransaction = data[index];
+  data.splice(index, 1);
+  displayMessage && message.success(
+    `${deletedTransaction.description} deleted successfully!`,
+    { duration: 5e3 }
+  );
+};
+
+const handleDelete = (key) => {
+  dialog.error({
+    title: 'Delete Transaction',
+    content: 'Are you sure you want to delete this transaction? This action cannot be undone.',
+    positiveText: 'Delete',
+    negativeText: 'Cancel',
+    onPositiveClick: () => { deleteTransaction(key) }
+  })
+};
+
+const handleDeleteMultiple = () => {
+  dialog.error({
+    title: 'Delete Transactions',
+    content: 'Are you sure you want to delete these transactions? This action cannot be undone.',
+    positiveText: 'Delete',
+    negativeText: 'Cancel',
+    onPositiveClick: () => { 
+      checkedRowKeys.value.forEach((key) => {
+        deleteTransaction(key, false);
+      })
+      message.success(
+        `${checkedRowKeys.value.length} transactions deleted successfully!`,
+        { duration: 5e3 }
+      );
+      checkedRowKeys.value.splice(0, checkedRowKeys.value.length);
+    }
+  })
+};
+
+const handleSave = async (newTransaction, editing, multiple) => { 
+  if (multiple) {
+    const keys = checkedRowKeys.value;
+    checkedRowKeys.value.forEach((key) => {
+      const index = data.findIndex((row) => row.key === key);
+      Object.keys(newTransaction).forEach((transactionKey) => {
+        // Only overwrite if the value in newTransaction is not null
+        if (newTransaction[transactionKey] !== null) {
+          data[index][transactionKey] = newTransaction[transactionKey];
+        }
+      });
+    })
+    message.success(
+      `${checkedRowKeys.value.length} transactions updated successfully!`,
+      { duration: 5e3 }
+    );
+    checkedRowKeys.value.splice(0, checkedRowKeys.value.length);
+  } else if (editing) {
     editTransaction(newTransaction);
   } else (
     addTransaction(newTransaction)

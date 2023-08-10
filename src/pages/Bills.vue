@@ -1,17 +1,57 @@
 <template>
-  <n-button @click="createMessage">
-    Last for 5 second
-  </n-button>
+  <n-space>
+    <n-button @click="handleConfirm">
+      Confirm
+    </n-button>
+    <n-button @click="handleSuccess">
+      Success
+    </n-button>
+    <n-button @click="handleError">
+      Error
+    </n-button>
+  </n-space>
 </template>
 
 <script setup>
-import { useMessage } from "naive-ui";
+import { useMessage, useDialog } from "naive-ui";
 
 const message = useMessage();
-const createMessage = () => {
-  message.success(
-    "I don't know why nobody told you how to unfold your love",
-    { duration: 5e3 }
-  );
-}
+const dialog = useDialog();
+
+const handleConfirm = () => {
+  dialog.warning({
+    title: "Confirm",
+    content: "Are you sure?",
+    positiveText: "Sure",
+    negativeText: "Not Sure",
+    onPositiveClick: () => {
+      message.success("Sure");
+    },
+    onNegativeClick: () => {
+      message.error("Not Sure");
+    }
+  });
+};
+
+const handleSuccess = () => {
+  dialog.success({
+    title: "Success",
+    content: "Cool",
+    positiveText: "Wow!",
+    onPositiveClick: () => {
+      message.success("Great!");
+    }
+  });
+};
+
+const handleError = () => {
+  dialog.error({
+    title: "Error",
+    content: "A mistake.",
+    positiveText: "Ahhh!",
+    onPositiveClick: () => {
+      message.success("I knew it...");
+    }
+  });
+};
 </script>

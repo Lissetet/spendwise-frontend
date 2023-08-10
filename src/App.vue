@@ -3,13 +3,15 @@
 <template>
   <n-config-provider :theme="themePreference" :themeOverrides="themeOverrides">
     <n-message-provider placement="bottom-right">
-      <div v-if="!isLoading && !isAuthenticated">
-        <nav-bar />
-        <hero-intro />
-      </div>
-      <div v-else>
-        <content />
-      </div>
+      <n-dialog-provider>
+        <div v-if="!isLoading && !isAuthenticated">
+          <nav-bar />
+          <hero-intro />
+        </div>
+        <div v-else>
+          <content />
+        </div>
+      </n-dialog-provider>
     </n-message-provider>
   </n-config-provider>
 </template>

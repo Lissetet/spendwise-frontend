@@ -122,8 +122,8 @@ const getOptions = (options) => {
   });
 };
 
-const typeOptions = getOptions(["income", "expense", "transfer"]);
-const accountOptions = getOptions(["cash", "credit card", "bank account"]);
+const typeOptions = getOptions(["Income", "Expense", "Transfer"]);
+const accountOptions = getOptions(["Cash", "Credit Card", "Bank Account"]);
 const categoryOptions = getOptions([
   "Salary",
   "Bonuses",
@@ -147,38 +147,26 @@ const categoryOptions = getOptions([
   "Education"
 ]);
 
-const rules = {
-  descriptionValue: {
-    required: true,
+const getRuleObject = (message, required=true) => {
+  return {
+    required,
     trigger: ["blur", "input"],
-    message: "Please input descriptionValue"
-  },
-  typeValue: {
-    required: true,
-    trigger: ["blur", "change"],
-    message: "Please select typeValue"
-  },
-  accountValue: {
-    required: true,
-    trigger: ["blur", "change"],
-    message: "Please select accountValue"
-  },
-  categoryValue: {
-    required: false,
-    trigger: ["blur", "change"],
-    message: "Please select categoryValue"
-  },
+    message
+  };
+};
+
+const rules = {
+  descriptionValue: getRuleObject("Please input description"),
+  typeValue: getRuleObject("Please select type"),
+  accountValue: getRuleObject("Please select account"),
+  categoryValue: getRuleObject("Please select category", false),
   dateValue: {
+    ...getRuleObject("Please input date"),
     type: "number",
-    required: true,
-    trigger: ["blur", "change"],
-    message: "Please input dateValue"
   },
   amountValue: {
+    ...getRuleObject("Please input valid amount"),
     type: "number",
-    required: true,
-    trigger: ["blur", "change"],
-    message: "Please input amountValue"
   },
 };
 
