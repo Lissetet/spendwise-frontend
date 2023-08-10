@@ -12,10 +12,11 @@
       }}
     </p>
     <div class="flex gap-4">
+      <edit-multiple :disabled="!multipleChecked" @handle-edit-multiple="handleEditMultiple"/>
       <n-button :disabled="!multipleChecked" @click="handleDeleteMultiple">
         Delete Multiple
       </n-button>
-      <n-button type="primary" @click="openModal('Add Transaction')">
+      <n-button type="primary" @click="openTransactionModal('Add Transaction')">
         Add Transaction
       </n-button>
       <n-button @click="exportToCSV" role="button" aria-label="Export to CSV" type="primary" ghost>
@@ -42,6 +43,7 @@ import { h, reactive, ref } from "vue";
 import { Icon } from "@iconify/vue";
 import { NTag, NButton, NDropdown, useMessage, useDialog, NDataTable} from "naive-ui";
 import TransactionModal from "@/components/TransactionModal.vue";
+import EditMultiple from "@/components/EditMultiple.vue";
 
 const message = useMessage();
 const dialog = useDialog();
@@ -49,8 +51,8 @@ const modal = ref(null);
 
 const multipleChecked = ref(false);
 
-const openModal = (currentTitle, transaction, multiple=false) => {
-  modal.value.openModal(currentTitle, transaction, multiple);
+const openTransactionModal = (currentTitle, transaction) => {
+  modal.value.openModal(currentTitle, transaction);
 };
 
 const accountTypes = {
@@ -197,7 +199,7 @@ const columns = [
     render(row) {
       const renderIcon = icon => () => h(Icon, { icon });
       const handleDropdownSelection = (selectedKey) => {
-        selectedKey === 'edit' ? openModal("Edit Transaction", row) : handleDelete(row.key);
+        selectedKey === 'edit' ? openTransactionModal("Edit Transaction", row) : handleDelete(row.key);
       };
 
       return h(
@@ -320,15 +322,27 @@ const handleDeleteMultiple = () => {
   })
 };
 
-const handleSave = async (newTransaction, editing, multiple) => { 
-  if (multiple) {
-    const keys = checkedRowKeys.value;
+const handleSave = async (newTransaction, editing) => { 
+  if (editing) {
+    editTransaction(newTransaction);
+  } else (
+    addTransaction(newTransaction)
+  )
+};
+
+const handleEditMultiple = (obj) => {
+  const allNull = Object.values(obj).every((value) => value === null);
+  allNull && message.error(
+    `Please select at least one field to edit!`,
+    { duration: 5e3 }
+  );
+  if (!allNull) {
     checkedRowKeys.value.forEach((key) => {
       const index = data.findIndex((row) => row.key === key);
-      Object.keys(newTransaction).forEach((transactionKey) => {
+      Object.keys(obj).forEach((transactionKey) => {
         // Only overwrite if the value in newTransaction is not null
-        if (newTransaction[transactionKey] !== null) {
-          data[index][transactionKey] = newTransaction[transactionKey];
+        if (obj[transactionKey] !== null) {
+          data[index][transactionKey] = obj[transactionKey];
         }
       });
     })
@@ -337,11 +351,7 @@ const handleSave = async (newTransaction, editing, multiple) => {
       { duration: 5e3 }
     );
     checkedRowKeys.value.splice(0, checkedRowKeys.value.length);
-  } else if (editing) {
-    editTransaction(newTransaction);
-  } else (
-    addTransaction(newTransaction)
-  )
-};
+  }
+}
 
 </script>

@@ -124,6 +124,7 @@ const menuNavOptions = [
   getHeaderOption(),
   getDividerOption(),
   getOption("Overview", "overview", "/overview"),
+  getOption("Accounts", "accounts", "/accounts"),
   getOption("Transactions", "transactions", "/transactions"),
   getOption("Goals", "goals", "/goals"),
   getOption("Bills", "bills", "/bills"),

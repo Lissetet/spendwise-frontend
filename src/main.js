@@ -15,7 +15,7 @@ const auth0 = createAuth0({
 createApp(App)
   .use(router)
   .use(auth0)
-  // .use(naive)
+  .use(naive)
   .component('icon', Icon)
   .mount("#app");
 
