@@ -24,7 +24,7 @@ import { useRouter } from 'vue-router';  // import the useRouter hook
 import NavBar from '@/components/NavBar.vue';
 import HeroIntro from '@/components/HeroIntro.vue';
 import Content from '@/components/Content.vue';
-import { darkTheme, lightTheme } from 'naive-ui'
+import { darkTheme, lightTheme, NConfigProvider, NMessageProvider, NDialogProvider } from 'naive-ui'
 
 const { isAuthenticated, isLoading, user, loginWithRedirect, logout } = useAuth0();
 const router = useRouter();  // get the router instance

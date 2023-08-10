@@ -23,6 +23,7 @@
 <script>
 import { useAuth0 } from '@auth0/auth0-vue';
 import { Icon } from '@iconify/vue';
+import { NButton } from 'naive-ui';
 import { addIcon } from '@iconify/vue';
 
 addIcon('spendwise', {

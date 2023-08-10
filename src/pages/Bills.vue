@@ -14,6 +14,8 @@
 
 <script setup>
 import { useMessage, useDialog } from "naive-ui";
+import { NSpace, NButton } from 'naive-ui';
+
 
 const message = useMessage();
 const dialog = useDialog();

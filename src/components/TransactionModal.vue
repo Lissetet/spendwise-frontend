@@ -70,9 +70,11 @@
 
 <script setup>
 import { ref, defineEmits, defineExpose } from "vue";
+import { NButton, NModal, NCard, NForm, NFormItem, NSelect, NDatePicker, NInput, NInputNumber, useMessage } from 'naive-ui';
 import { Icon } from '@iconify/vue';
 
-const emit = defineEmits(['new-transaction']);
+const emit = defineEmits(['handle-save']);
+const message = useMessage();
 const showTransactionModal = ref(false);
 const title = ref(null);
 const editing = ref(false);
@@ -174,7 +176,6 @@ const handleValidateButtonClick = (e) => {
   e.preventDefault();
   formRef.value?.validate((errors) => {
     if (!errors) {
-      console.log(model.value.key)
       emit('handle-save', {
         key: model.value.key || Date.now(),
         date: new Date(model.value.dateValue),
@@ -186,6 +187,7 @@ const handleValidateButtonClick = (e) => {
       }, editing.value);
     } 
     else {
+      message.error('Unknow error, please try again.');
       console.log(errors);
     }
   });

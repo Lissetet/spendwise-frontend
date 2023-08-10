@@ -40,7 +40,7 @@
 <script setup>
 import { h, reactive, ref } from "vue";
 import { Icon } from "@iconify/vue";
-import { NTag, NButton, NDropdown, useMessage, useDialog } from "naive-ui";
+import { NTag, NButton, NDropdown, useMessage, useDialog, NDataTable} from "naive-ui";
 import TransactionModal from "@/components/TransactionModal.vue";
 
 const message = useMessage();

@@ -26,6 +26,7 @@
           <Icon icon="material-symbols:menu" class="text-xl"/>
         </n-button> -->
         <div>
+          <feedback-modal />
           <n-button quaternary v-for="button in buttons" :key="button.icon">
             <Icon :icon="button.icon" class="pr-2"/>
             <span>{{ button.text }}</span>
@@ -44,7 +45,9 @@
 import { useAuth0 } from '@auth0/auth0-vue';
 import { Icon } from '@iconify/vue';
 import { RouterLink } from 'vue-router';
+import { NLayout, NDivider, NLayoutSider, NSpace, NMenu, NButton } from 'naive-ui';
 import { ref, h, inject, onMounted, onBeforeUnmount } from 'vue';
+import FeedbackModal from './FeedbackModal.vue';
 
 const isDarkTheme = inject('isDarkTheme');
 
@@ -134,7 +137,6 @@ const menuNavOptions = [
 ];
 
 const buttons = [
-  { icon: "uil:comment", text: "Leave Feedback" },
   { icon: "material-symbols:add", text: "Add Account" },
   { icon: "mi:notification", text: "Notifications" },
   { icon: "material-symbols:help-outline", text: "Help" },
