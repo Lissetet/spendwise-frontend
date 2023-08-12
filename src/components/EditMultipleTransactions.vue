@@ -1,5 +1,6 @@
 <template>
   <n-button @click="showEditMultiple = true" :disabled="disabled">
+    <Icon icon="material-symbols:edit" class="pr-2" />
     Edit Multiple
   </n-button>
   <n-modal v-model:show="showEditMultiple">
@@ -79,7 +80,6 @@ const props = defineProps({
 })
 const message = useMessage();
 const showEditMultiple = ref(false);
-const editing = ref(false);
 const formRef = ref(null);
 
 const model = ref({});

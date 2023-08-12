@@ -1,59 +1,30 @@
 <template>
-  <n-space>
-    <n-button @click="handleConfirm">
-      Confirm
-    </n-button>
-    <n-button @click="handleSuccess">
-      Success
-    </n-button>
-    <n-button @click="handleError">
-      Error
-    </n-button>
-  </n-space>
+  <h1>Bills</h1>
+  <n-calendar
+    v-model:value="value"
+    #="{ year, month, date }"
+    :is-date-disabled="isDateDisabled"
+    @update:value="handleUpdateValue"
+  >
+    {{ year }}-{{ month }}-{{ date }}
+  </n-calendar>
 </template>
 
 <script setup>
-import { useMessage, useDialog } from "naive-ui";
-import { NSpace, NButton } from 'naive-ui';
-
+import { ref } from "vue";
+import { useMessage } from 'naive-ui'
+import { isYesterday, addDays } from 'date-fns/esm'
 
 const message = useMessage();
-const dialog = useDialog();
 
-const handleConfirm = () => {
-  dialog.warning({
-    title: "Confirm",
-    content: "Are you sure?",
-    positiveText: "Sure",
-    negativeText: "Not Sure",
-    onPositiveClick: () => {
-      message.success("Sure");
-    },
-    onNegativeClick: () => {
-      message.error("Not Sure");
-    }
-  });
+const value = ref(addDays(Date.now(), 1).valueOf());
+const handleUpdateValue = (_, { year, month, date }) => {
+  message.success(`${year}-${month}-${date}`);
 };
-
-const handleSuccess = () => {
-  dialog.success({
-    title: "Success",
-    content: "Cool",
-    positiveText: "Wow!",
-    onPositiveClick: () => {
-      message.success("Great!");
-    }
-  });
-};
-
-const handleError = () => {
-  dialog.error({
-    title: "Error",
-    content: "A mistake.",
-    positiveText: "Ahhh!",
-    onPositiveClick: () => {
-      message.success("I knew it...");
-    }
-  });
-};
+const isDateDisabled = (timestamp) =>{
+  if (isYesterday(timestamp)) {
+    return true;
+  }
+  return false;
+}
 </script>

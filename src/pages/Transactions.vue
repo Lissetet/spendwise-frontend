@@ -12,11 +12,13 @@
       }}
     </p>
     <div class="flex gap-4">
-      <edit-multiple :disabled="!multipleChecked" @handle-edit-multiple="handleEditMultiple"/>
       <n-button :disabled="!multipleChecked" @click="handleDeleteMultiple">
+        <Icon icon="material-symbols:delete" class="pr-2"/>
         Delete Multiple
       </n-button>
+      <edit-multiple-transactions :disabled="!multipleChecked" @handle-edit-multiple="handleEditMultiple"/>
       <n-button type="primary" @click="openTransactionModal('Add Transaction')">
+        <Icon icon="material-symbols:add" class="pr-2"/>
         Add Transaction
       </n-button>
       <n-button @click="exportToCSV" role="button" aria-label="Export to CSV" type="primary" ghost>
@@ -43,7 +45,7 @@ import { h, reactive, ref } from "vue";
 import { Icon } from "@iconify/vue";
 import { NTag, NButton, NDropdown, useMessage, useDialog, NDataTable} from "naive-ui";
 import TransactionModal from "@/components/TransactionModal.vue";
-import EditMultiple from "@/components/EditMultiple.vue";
+import EditMultipleTransactions from "@/components/EditMultipleTransactions.vue";
 
 const message = useMessage();
 const dialog = useDialog();
@@ -111,7 +113,7 @@ const getRandomDate = () => {
   );
 };
 
-let data = reactive(Array.from({ length: 10 }).map((_, index) => ({
+let data = reactive(Array.from({ length: 100 }).map((_, index) => ({
   key: index + 1,
   date: getRandomDate(),
   amount: getRandomInt(1000),
@@ -228,9 +230,9 @@ const columns = [
 
 const pagination = reactive({
   page: 1,
-  pageSize: 25,
+  pageSize: 10,
   showSizePicker: true,
-  pageSizes: [25, 50, 100],
+  pageSizes: [10, 25, 50, 100],
   prefix ({ itemCount }) {
     return `${(pagination.page - 1) * pagination.pageSize + 1}-${Math.min(pagination.page * pagination.pageSize, itemCount)} out of ${itemCount}`
   },

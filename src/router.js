@@ -28,6 +28,7 @@ const getRoute = (path, component) =>  {
 
 
 const routes = [
+  getRoute('/', Overview),
   getProtectedRoute('/overview', Overview),
   getProtectedRoute('/accounts', Accounts),
   getProtectedRoute('/transactions', Transactions),

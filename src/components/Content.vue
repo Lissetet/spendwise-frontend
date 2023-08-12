@@ -27,9 +27,13 @@
         </n-button> -->
         <div>
           <feedback-modal />
-          <n-button quaternary v-for="button in buttons" :key="button.icon">
-            <Icon :icon="button.icon" class="pr-2"/>
-            <span>{{ button.text }}</span>
+          <n-button quaternary>
+            <Icon icon="mi:notification" class="pr-2"/>
+            Notifications
+          </n-button>
+          <n-button quaternary>
+            <Icon icon="material-symbols:help-outline" class="pr-2"/>
+            Help
           </n-button>
         </div>
       </n-space>
@@ -47,7 +51,7 @@ import { Icon } from '@iconify/vue';
 import { RouterLink } from 'vue-router';
 import { NLayout, NDivider, NLayoutSider, NSpace, NMenu, NButton } from 'naive-ui';
 import { ref, h, inject, onMounted, onBeforeUnmount } from 'vue';
-import FeedbackModal from './FeedbackModal.vue';
+import FeedbackModal from '@/components/FeedbackModal.vue';
 
 const isDarkTheme = inject('isDarkTheme');
 
@@ -137,11 +141,6 @@ const menuNavOptions = [
   getLogOut(),
 ];
 
-const buttons = [
-  { icon: "material-symbols:add", text: "Add Account" },
-  { icon: "mi:notification", text: "Notifications" },
-  { icon: "material-symbols:help-outline", text: "Help" },
-];
 </script>
 
 <style>
