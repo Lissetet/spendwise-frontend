@@ -115,6 +115,7 @@ const getAllCategories = async () => {
         inputValues.value[category.alias] = '';
         editingID.value[category.alias] = null;
       });
+     getUserSubcategories();
     })
     .catch((error) => {
       message.error({
@@ -139,10 +140,7 @@ const getUserSubcategories = async () => {
     });
 };
 
-onMounted(()=> {
-  getAllCategories(); 
-  getUserSubcategories();
-}); 
+onMounted(getAllCategories); 
 
 const handleDelete = (id) => {
   dialog.error({

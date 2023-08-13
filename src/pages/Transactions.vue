@@ -41,7 +41,7 @@
 
 
 <script setup>
-import { h, reactive, ref } from "vue";
+import { h, reactive, ref, onMounted } from "vue";
 import { Icon } from "@iconify/vue";
 import { 
   NTag, 
@@ -51,6 +51,15 @@ import {
   useDialog, 
   NDataTable
 } from "naive-ui";
+import { useAuth0 } from '@auth0/auth0-vue';
+import axios from 'axios';
+
+const baseURL = import.meta.env.VITE_BASE_URL;
+const { user } = useAuth0();
+
+const sortedCategories = ref([]);
+const userId = user._rawValue.sub;
+
 import TransactionModal from "@/components/TransactionModal.vue";
 import EditMultipleTransactions from "@/components/EditMultipleTransactions.vue";
 
@@ -60,6 +69,57 @@ const dialog = useDialog();
 const modal = ref(null);
 
 const multipleChecked = ref(false);
+
+
+const getAllCategories = async () => {
+  const userSubcategories = await getUserSubcategories();
+  axios.get(`${baseURL}/categories?user=all`)
+    .then((response) => {
+      const categories = response.data;
+      const parentCategories = categories.filter((category) => category.parent === 'root');
+      const subcategories = categories.filter((category) => category.parent !== 'root')
+        .sort((a, b) => a.parent.localeCompare(b.parent));;
+
+      parentCategories.forEach((category) => {
+        sortedCategories.value.push(category);
+        subcategories.forEach(subcategory => {
+          if (subcategory.parent === category.alias) {
+            sortedCategories.value.push(subcategory);
+          }
+        });
+        userSubcategories.forEach(subcategory => {
+          if (subcategory.parent === category.alias) {
+            sortedCategories.value.push(subcategory);
+          }
+        });
+      });
+      modal.value.setCatergoryOptions(sortedCategories.value);
+    })
+    .catch((error) => {
+      message.error({
+        title: 'Error',
+        content: 'There was an error loading your categories. Please try again later.'
+      });
+      console.log(error);
+    });
+};
+
+const getUserSubcategories = async () => {
+  try {
+    const response = await axios.get(`${baseURL}/categories?user=${userId}`);
+    return response.data; 
+  } catch (error) {
+    message.error({
+      title: 'Error',
+      content: 'There was an error loading your categories. Please try again later.'
+    });
+    console.log(error);
+    return [];
+  }
+};
+
+onMounted(getAllCategories); 
+
 
 const openTransactionModal = (currentTitle, transaction) => {
   modal.value.openModal(currentTitle, transaction);
@@ -187,7 +247,7 @@ const columns = [
     key: "category", 
     width: 150,
     render(row) {
-      return row.category ? row.category : "Uncategorized";
+      return sortedCategories.value.find((category) => category._id === row.category).name;
     },
     filterOptions: getFilterOptions(categoryTypes),
     filter: (value, row) => {
