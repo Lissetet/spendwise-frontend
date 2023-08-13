@@ -50,6 +50,7 @@
           </n-form-item>
           <n-form-item label="Category" path="categoryValue">
             <n-select
+              remote
               v-model:value="model.categoryValue"
               placeholder="Select Category"
               :options="categoryOptions"
@@ -69,9 +70,17 @@
 </template>
 
 <script setup>
-import { ref, defineEmits, defineExpose } from "vue";
+import { useAuth0 } from '@auth0/auth0-vue';
+import { ref, defineEmits, defineExpose, onMounted } from "vue";
 import { NButton, NModal, NCard, NForm, NFormItem, NSelect, NDatePicker, NInput, NInputNumber, useMessage } from 'naive-ui';
 import { Icon } from '@iconify/vue';
+import axios from 'axios';
+
+const baseURL = import.meta.env.VITE_BASE_URL;
+const { user } = useAuth0();
+
+const sortedCategores = ref([]);
+const userId = user._rawValue.sub;
 
 const emit = defineEmits(['handle-save']);
 const message = useMessage();
@@ -89,6 +98,55 @@ const emptyData = {
   accountValue: null
 };
 const model = ref({...emptyData});
+
+const getAllCategories = async () => {
+  const userSubcategories = await getUserSubcategories();
+  axios.get(`${baseURL}/categories?user=all`)
+    .then((response) => {
+      const categories = response.data;
+      const parentCategories = categories.filter((category) => category.parent === 'root');
+      const subcategories = categories.filter((category) => category.parent !== 'root')
+        .sort((a, b) => a.parent.localeCompare(b.parent));;
+
+      parentCategories.forEach((category) => {
+        sortedCategores.value.push(category);
+        subcategories.forEach(subcategory => {
+          if (subcategory.parent === category.alias) {
+            sortedCategores.value.push(subcategory);
+          }
+        });
+        userSubcategories.forEach(subcategory => {
+          if (subcategory.parent === category.alias) {
+            sortedCategores.value.push(subcategory);
+          }
+        });
+      });
+      categoryOptions.value = getCatergoryOptions(sortedCategores.value);
+    })
+    .catch((error) => {
+      message.error({
+        title: 'Error',
+        content: 'There was an error loading your categories. Please try again later.'
+      });
+      console.log(error);
+    });
+};
+
+const getUserSubcategories = async () => {
+  try {
+    const response = await axios.get(`${baseURL}/categories?user=${userId}`);
+    return response.data; 
+  } catch (error) {
+    message.error({
+      title: 'Error',
+      content: 'There was an error loading your categories. Please try again later.'
+    });
+    console.log(error);
+    return []; // Return an empty array (or handle the error as needed)
+  }
+};
+
+onMounted(getAllCategories); 
 
 const openModal = (modalTitle, transaction) => {
   title.value = modalTitle;
@@ -124,30 +182,22 @@ const getOptions = (options) => {
   });
 };
 
+const getCatergoryOptions = (options) => {
+  return options.map((v) => {
+    return {
+      label: v.name,
+      value: v.alias,
+      style: v.parent === 'root' ? {} : {
+                paddingLeft: '1.5rem'
+              },
+      class: v.parent === 'root' ? 'font-extrabold' : ''
+    };
+  });
+};
+
 const typeOptions = getOptions(["Income", "Expense", "Transfer"]);
 const accountOptions = getOptions(["Cash", "Credit Card", "Bank Account"]);
-const categoryOptions = getOptions([
-  "Salary",
-  "Bonuses",
-  "Investments",
-  "Business",
-  "Rentals",
-  "Royalties",
-  "Pensions",
-  "Interest",
-  "Alimony",
-  "Gifts",
-  "Housing",
-  "Utilities",
-  "Groceries",
-  "Dining",
-  "Transport",
-  "Vehicle",
-  "Health",
-  "Entertainment",
-  "Clothing",
-  "Education"
-]);
+const categoryOptions = ref([]);
 
 const getRuleObject = (message, required=true) => {
   return {

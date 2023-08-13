@@ -1,5 +1,5 @@
 <template>
-  <section>
+  <section id="hero">
     <div class="container gap-10 flex-wrap">
       <div class="">
         <h1 class="font-extrabold text-primary text-4xl">
@@ -59,7 +59,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 section {
   @apply p-14 flex items-center justify-center px-4 bg-cover bg-center bg-no-repeat;
   background-image: linear-gradient(to right, rgba(225, 225, 225, 0.95), rgba(185, 227, 205, 0.95), rgba(225, 225, 225, 0.95)), url('bg.svg');

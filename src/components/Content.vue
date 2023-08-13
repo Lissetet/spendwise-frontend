@@ -133,7 +133,7 @@ const menuNavOptions = [
   getOption("Goals", "goals", "/goals"),
   getOption("Bills", "bills", "/bills"),
   getOption("Budgets", "budgets", "/budgets"),
-  // getOption("Categories", "categories", "/categories"),
+  getOption("Categories", "categories", "/categories"),
   getOption("Net Worth", "net-worth", "/net-worth"),
   getDividerOption(),
   getOption("Settings", "settings", "/settings"),

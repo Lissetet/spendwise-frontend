@@ -22,7 +22,6 @@
         <p class="text-sm mb-8">We would love to hear your feedback!</p>
         <n-rate 
           size="large" 
-          color="#4fb233" 
           clearable 
           :count="10"
           @update:value="(v)=>selectedStars = v"

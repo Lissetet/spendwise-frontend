@@ -43,9 +43,17 @@
 <script setup>
 import { h, reactive, ref } from "vue";
 import { Icon } from "@iconify/vue";
-import { NTag, NButton, NDropdown, useMessage, useDialog, NDataTable} from "naive-ui";
+import { 
+  NTag, 
+  NButton, 
+  NDropdown, 
+  useMessage, 
+  useDialog, 
+  NDataTable
+} from "naive-ui";
 import TransactionModal from "@/components/TransactionModal.vue";
 import EditMultipleTransactions from "@/components/EditMultipleTransactions.vue";
+
 
 const message = useMessage();
 const dialog = useDialog();
@@ -113,15 +121,17 @@ const getRandomDate = () => {
   );
 };
 
-let data = reactive(Array.from({ length: 100 }).map((_, index) => ({
-  key: index + 1,
-  date: getRandomDate(),
-  amount: getRandomInt(1000),
-  description: `This is a description and it is so so so so long ${index + 1}`,
-  category: categoryTypes[getRandomInt(20)],
-  type: types[getRandomInt(3)],
-  account: accountTypes[getRandomInt(5)]
-})));
+// let data = reactive(Array.from({ length: 100 }).map((_, index) => ({
+//   key: index + 1,
+//   date: getRandomDate(),
+//   amount: getRandomInt(1000),
+//   description: `This is a description and it is so so so so long ${index + 1}`,
+//   category: categoryTypes[getRandomInt(20)],
+//   type: types[getRandomInt(3)],
+//   account: accountTypes[getRandomInt(5)]
+// })));
+
+let data = reactive([]);
 
 const columns = [
   { 
