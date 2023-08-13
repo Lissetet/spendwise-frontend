@@ -78,7 +78,7 @@
 <script setup>
 import { useAuth0 } from '@auth0/auth0-vue';
 const { user } = useAuth0();
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 import { Icon } from '@iconify/vue';
 import axios from 'axios';
 import { 
@@ -93,13 +93,13 @@ import {
 
 const baseURL = import.meta.env.VITE_BASE_URL;
 
-const categories = ref([]);
-const parentCategories = ref([]);
-const userSubcategories = ref([]);
-const show = ref({});
-const showAdd =ref({});
-const inputValues = ref({});
-const editingID = ref({})
+const categories = reactive([]);
+const parentCategories = reactive([]);
+const userSubcategories = reactive([]);
+const show = reactive({});
+const showAdd =reactive({});
+const inputValues = reactive({});
+const editingID = reactive({})
 const userId = user._rawValue.sub;
 const dialog = useDialog();
 const message = useMessage();
@@ -107,13 +107,13 @@ const message = useMessage();
 const getAllCategories = async () => {
   axios.get(`${baseURL}/categories?user=all`)
     .then((response) => {
-      categories.value = response.data;
-      parentCategories.value = categories.value.filter((category) => category.parent === 'root');
-      parentCategories.value.forEach((category) => {
-        show.value[category.alias] = false;
-        showAdd.value[category.alias] = 'none';
-        inputValues.value[category.alias] = '';
-        editingID.value[category.alias] = null;
+      categories.push(...response.data);
+      parentCategories.push(...categories.filter((category) => category.parent === 'root'));
+      parentCategories.forEach((category) => {
+        show[category.alias] = false;
+        showAdd[category.alias] = 'none';
+        inputValues[category.alias] = '';
+        editingID[category.alias] = null;
       });
      getUserSubcategories();
     })
@@ -129,7 +129,7 @@ const getAllCategories = async () => {
 const getUserSubcategories = async () => {
   axios.get(`${baseURL}/categories?user=${userId}`)
     .then((response) => {
-      userSubcategories.value = response.data;
+      userSubcategories.push(...response.data);
     })
     .catch((error) => {
       message.error({
@@ -155,8 +155,8 @@ const handleDelete = (id) => {
 const deleteCategory = async (id) => {
   axios.delete(`${baseURL}/categories/${id}`)
     .then((response) => {
-      console.log(response.data);
-      userSubcategories.value = userSubcategories.value.filter((subcategory) => subcategory._id !== id);
+      const index = userSubcategories.findIndex((subcategory) => subcategory._id === id);
+      userSubcategories.splice(index, 1);
     })
     .catch((error) => {
       message.error({
@@ -176,7 +176,7 @@ const createAlias = (category) => {
 };
 
 const addSubcategory = async (alias) => {
-  const name = inputValues.value[alias];
+  const name = inputValues[alias];
   const body = { 
     name,
     parent: alias,
@@ -186,9 +186,9 @@ const addSubcategory = async (alias) => {
 
   axios.post(`${baseURL}/categories`, body)
     .then((response) => {
-      userSubcategories.value.push(response.data);
-      showAdd.value[alias] = 'none';
-      inputValues.value[alias] = '';
+      userSubcategories.push(response.data);
+      showAdd[alias] = 'none';
+      inputValues[alias] = '';
     })
     .catch((error) => {
       message.error({
@@ -200,24 +200,24 @@ const addSubcategory = async (alias) => {
 };
 
 const handleEdit = (id, alias) => {
-  showAdd.value[alias] = 'edit';
-  editingID.value[alias] = id;
-  inputValues.value[alias] = userSubcategories.value.find((subcategory) => subcategory._id === id).name;
+  showAdd[alias] = 'edit';
+  editingID[alias] = id;
+  inputValues[alias] = userSubcategories.find((subcategory) => subcategory._id === id).name;
 };
 
 const editSubcategory = async (alias) => {
   const body = { 
-    name: inputValues.value[alias],
-    alias: `${createAlias(inputValues.value[alias])}-${userId}`
+    name: inputValues[alias],
+    alias: `${createAlias(inputValues[alias])}-${userId}`
   }
 
-  axios.patch(`${baseURL}/categories/${editingID.value[alias]}`, body)
+  axios.patch(`${baseURL}/categories/${editingID[alias]}`, body)
     .then((response) => {
-      const index = userSubcategories.value.findIndex((subcategory) => subcategory._id === editingID.value[alias]);
-      userSubcategories.value[index] = response.data;
-      showAdd.value[alias] = 'none';
-      inputValues.value[alias] = '';
-      editingID.value[alias] = null;
+      const index = userSubcategories.findIndex((subcategory) => subcategory._id === editingID[alias]);
+      userSubcategories[index] = response.data;
+      showAdd[alias] = 'none';
+      inputValues[alias] = '';
+      editingID[alias] = null;
     })
     .catch((error) => {
       message.error({
