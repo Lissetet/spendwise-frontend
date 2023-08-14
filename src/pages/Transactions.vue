@@ -333,8 +333,12 @@ const handleCheck = (rowKeys) => {
 
 const exportToCSV = () => {
   let csvContent = "Date,Description,Amount,Category,Type,Account\n";
+
   data.forEach(row => {
-    csvContent += `${row.date},"${row.description}",${row.amount},${row.category},${row.type},${row.account}\n`;
+    const account = accounts.find((acc) => acc._id === row.account).name;
+    const category = sortedCategories.find((category) => category.alias === row.category).name;
+    const date = new Date(row.date).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' });
+    csvContent += `${date},"${row.description}",${row.amount},${category},${row.type},${account}\n`;
   });
 
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
