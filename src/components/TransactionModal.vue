@@ -129,9 +129,7 @@ const getCatergoryOptions = (options) => {
     return {
       label: v.name,
       value: v._id,
-      style: v.parent === 'root' ? {} : {
-                paddingLeft: '1.5rem'
-              },
+      style: v.parent === 'root' ? {} : { paddingLeft: '1.5rem'},
       class: v.parent === 'root' ? 'font-extrabold' : ''
     };
   });

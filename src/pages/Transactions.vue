@@ -57,7 +57,7 @@ import axios from 'axios';
 const baseURL = import.meta.env.VITE_BASE_URL;
 const { user } = useAuth0();
 
-const sortedCategories = ref([]);
+const sortedCategories = reactive([]);
 const userId = user._rawValue.sub;
 
 import TransactionModal from "@/components/TransactionModal.vue";
@@ -81,19 +81,19 @@ const getAllCategories = async () => {
         .sort((a, b) => a.parent.localeCompare(b.parent));;
 
       parentCategories.forEach((category) => {
-        sortedCategories.value.push(category);
+        sortedCategories.push(category);
         subcategories.forEach(subcategory => {
           if (subcategory.parent === category.alias) {
-            sortedCategories.value.push(subcategory);
+            sortedCategories.push(subcategory);
           }
         });
         userSubcategories.forEach(subcategory => {
           if (subcategory.parent === category.alias) {
-            sortedCategories.value.push(subcategory);
+            sortedCategories.push(subcategory);
           }
         });
       });
-      modal.value.setCatergoryOptions(sortedCategories.value);
+      modal.value.setCatergoryOptions(sortedCategories);
     })
     .catch((error) => {
       message.error({
@@ -247,7 +247,7 @@ const columns = [
     key: "category", 
     width: 150,
     render(row) {
-      return sortedCategories.value.find((category) => category._id === row.category).name;
+      return sortedCategories.find((category) => category._id === row.category).name;
     },
     filterOptions: getFilterOptions(categoryTypes),
     filter: (value, row) => {

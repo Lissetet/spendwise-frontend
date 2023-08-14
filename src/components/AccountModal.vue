@@ -33,6 +33,8 @@
               v-model:value="model.typeValue"
               placeholder="Select Account Type"
               :options="typeOptions"
+              :render-label="renderLabel"
+              class="capitalize"
             />
           </n-form-item>
            <n-form-item label="Opening Balance" path="balanceValue" placeholder="Opening Balance" v-if="!editing">
@@ -52,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, defineEmits, defineProps } from "vue";
+import { ref, defineEmits, h } from "vue";
 import { NButton, NModal, NCard, NForm, NFormItem, NSelect, NInput, useMessage, NInputNumber } from 'naive-ui';
 import { Icon } from '@iconify/vue';
 
@@ -74,7 +76,7 @@ const openModal = (modalTitle, account) => {
   editing.value = !!account;
   if (account) {
     model.value = {
-      key: account.key,
+      _id: account._id,
       nameValue: account.name,
       typeValue: account.type,
       balanceValue: account.balance
@@ -93,22 +95,27 @@ defineExpose({ openModal, closeModal });
 
 const getOptions = (options) => {
   return options.map((v) => {
-    const capitalized = v.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     return {
-      label: capitalized,
+      label: v,
       value: v
     };
   });
 };
 
+const renderLabel = (option, selected) => {
+  const label = option.label === 'credit' ? 'Credit Card' : option.label;
+  return h("span", { class: 'capitalize' }, label);
+};
+
 const typeOptions = getOptions([
-  'Checking', 
-  'Savings', 
-  'Investment', 
-  'Cash',
-  'Loan', 
-  'Credit',
-  'Other'
+  'cash',
+  'checking', 
+  'savings', 
+  'investment', 
+  'credit',
+  'loan', 
+  'property',
+  'other'
 ]);
 
 const getRuleObject = (message, required=true) => {
@@ -134,7 +141,7 @@ const handleValidateButtonClick = (e) => {
   formRef.value?.validate((errors) => {
     if (!errors) {
       emit('handle-save', {
-        key: model.value.key,
+        _id: model.value._id,
         name: model.value.nameValue,
         type: model.value.typeValue,
         balance: model.value.balanceValue || 0,

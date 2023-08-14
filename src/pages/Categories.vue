@@ -78,7 +78,7 @@
 <script setup>
 import { useAuth0 } from '@auth0/auth0-vue';
 const { user } = useAuth0();
-import { ref, onMounted, reactive } from 'vue';
+import { onMounted, reactive } from 'vue';
 import { Icon } from '@iconify/vue';
 import axios from 'axios';
 import { 
