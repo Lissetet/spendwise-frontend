@@ -97,11 +97,11 @@ const openModal = (modalTitle, transaction) => {
   editing.value = !!transaction;
   if (transaction) {
     model.value = {
-      key: transaction.key,
+      _id: transaction._id,
       descriptionValue: transaction.description,
       typeValue: transaction.type,
       categoryValue: transaction.category,
-      dateValue: transaction.date.getTime(),
+      dateValue: new Date(transaction.date).getTime(),
       amountValue: transaction.amount,
       accountValue: transaction.account
     };
@@ -192,6 +192,7 @@ const handleValidateButtonClick = (e) => {
     model.value.typeValue === 'expense' && (transaction.amount = -model.value.amountValue);
     model.value.typeValue && (transaction.type = model.value.typeValue);
     model.value.categoryValue && (transaction.category = model.value.categoryValue);
+    model.value._id && (transaction._id = model.value._id);
 
     if (!errors) {
       emit('handle-save', transaction, editing.value);

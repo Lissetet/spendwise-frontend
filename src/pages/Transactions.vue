@@ -367,13 +367,31 @@ const addTransaction = (newTransaction) => {
     })
 };
 
-const editTransaction = (newTransaction) => {
-  const index = data.findIndex((row) => row.key === newTransaction.key);
-  data[index] = {...newTransaction};
-  message.success(
-    `${newTransaction.description} updated successfully!`,
-    { duration: 5e3 }
-  );
+const editTransaction = (editedTransaction) => {
+  const requetBody = {}
+  const transactionIndex = data.findIndex((row) => row._id === editedTransaction._id);
+
+  Object.keys(editedTransaction).forEach((transactionKey) => {
+    if (editedTransaction[transactionKey] !== data[transactionIndex][transactionKey]) {
+      requetBody[transactionKey] = editedTransaction[transactionKey];
+    }
+  });
+
+  axios.patch(`${baseURL}/transactions/${editedTransaction._id}`, requetBody)
+    .then(() => {
+      data[transactionIndex] = {...editedTransaction};
+      message.success(
+        `${editedTransaction.description} updated successfully!`,
+        { duration: 5e3 }
+      );
+    })
+    .catch((error) => {
+      message.error({
+        title: 'Error',
+        content: 'There was an error updating your transaction. Please try again later.'
+      });
+      console.log(error);
+    })
 };
 
 const deleteTransaction = (transaction, displayMessage=true) => {
