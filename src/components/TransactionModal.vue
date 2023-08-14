@@ -36,6 +36,7 @@
           </n-form-item>
           <n-form-item label="Account" path="accountValue">
             <n-select
+              remote
               v-model:value="model.accountValue"
               placeholder="Select Acccount"
               :options="accountOptions"
@@ -114,7 +115,7 @@ const closeModal = () => {
 }
 
 
-const getOptions = (options) => {
+const getTypeOptions = (options) => {
   return options.map((v) => {
     const capitalized = v.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     return {
@@ -128,24 +129,37 @@ const getCatergoryOptions = (options) => {
   return options.map((v) => {
     return {
       label: v.name,
-      value: v._id,
+      value: v.alias,
       style: v.parent === 'root' ? {} : { paddingLeft: '1.5rem'},
       class: v.parent === 'root' ? 'font-extrabold' : ''
     };
   });
 };
 
-const setCatergoryOptions = (options) => {
+const getAccountOptions = (options) => {
+  return options.map((v) => {
+    return {
+      label: v.name,
+      value: v._id
+    };
+  });
+};
+
+const setCategoryOptions = (options) => {
   categoryOptions.value = getCatergoryOptions(options);
 };
 
-const typeOptions = getOptions(["Income", "Expense", "Transfer"]);
-const accountOptions = getOptions(["Cash", "Credit Card", "Bank Account"]);
+const setAccountOptions = (options) => {
+  accountOptions.value = getAccountOptions(options);
+};
+
+const typeOptions = getTypeOptions(["income", "expense", "adjustment", "transfer"]);
+const accountOptions = ref([]);
 const categoryOptions = ref([]);
 
-const getRuleObject = (message) => {
+const getRuleObject = (message, required=true) => {
   return {
-    required: true,
+    required,
     trigger: ["blur", "input"],
     message
   };
@@ -153,9 +167,9 @@ const getRuleObject = (message) => {
 
 const rules = {
   descriptionValue: getRuleObject("Please input description"),
-  typeValue: getRuleObject("Please select type"),
+  typeValue: getRuleObject("Please select type", false),
   accountValue: getRuleObject("Please select account"),
-  categoryValue: getRuleObject("Please select category"),
+  categoryValue: getRuleObject("Please select category", false),
   dateValue: {
     ...getRuleObject("Please input date"),
     type: "number",
@@ -169,16 +183,18 @@ const rules = {
 const handleValidateButtonClick = (e) => {
   e.preventDefault();
   formRef.value?.validate((errors) => {
+    const transaction = {
+      date: new Date(model.value.dateValue),
+      description: model.value.descriptionValue,
+      account: model.value.accountValue,
+      amount: model.value.amountValue,
+    };  
+    model.value.typeValue === 'expense' && (transaction.amount = -model.value.amountValue);
+    model.value.typeValue && (transaction.type = model.value.typeValue);
+    model.value.categoryValue && (transaction.category = model.value.categoryValue);
+
     if (!errors) {
-      emit('handle-save', {
-        key: model.value.key || Date.now(),
-        date: new Date(model.value.dateValue),
-        description: model.value.descriptionValue,
-        category: model.value.categoryValue, 
-        type: model.value.typeValue,
-        account: model.value.accountValue,
-        amount: model.value.amountValue
-      }, editing.value);
+      emit('handle-save', transaction, editing.value);
     } 
     else {
       message.error('Unknow error, please try again.');
@@ -188,6 +204,6 @@ const handleValidateButtonClick = (e) => {
   closeModal();
 };
 
-defineExpose({ openModal, closeModal, setCatergoryOptions });
+defineExpose({ openModal, closeModal, setCategoryOptions, setAccountOptions });
 
 </script>

@@ -48,6 +48,7 @@
     :row-class-name="row => row.children && 'font-bold'"
     :summary="createSummary"
     @update:checked-row-keys="handleCheck"
+    :row-key="row => row._id ? row._id : row.key"
     default-expand-all
     class="mb-10"
   />

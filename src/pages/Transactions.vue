@@ -32,6 +32,7 @@
     :data="data"
     :pagination="pagination"
     :bordered="true"
+    :row-key="row => row._id"
     @update:checked-row-keys="handleCheck"
   />
   <n-button text type="primary" @click="exportToCSV">
@@ -58,6 +59,10 @@ const baseURL = import.meta.env.VITE_BASE_URL;
 const { user } = useAuth0();
 
 const sortedCategories = reactive([]);
+const categoryOptions = reactive([]);
+const accountOptions = reactive([]);
+const typeOptions = reactive([]);
+const accounts = reactive([]);
 const userId = user._rawValue.sub;
 
 import TransactionModal from "@/components/TransactionModal.vue";
@@ -69,9 +74,10 @@ const dialog = useDialog();
 const modal = ref(null);
 
 const multipleChecked = ref(false);
+const data = reactive([]);
 
 
-const getAllCategories = async () => {
+const populateData = async () => {
   const userSubcategories = await getUserSubcategories();
   axios.get(`${baseURL}/categories?user=all`)
     .then((response) => {
@@ -93,7 +99,12 @@ const getAllCategories = async () => {
           }
         });
       });
-      modal.value.setCatergoryOptions(sortedCategories);
+    })
+    .then(() => {
+      modal.value.setCategoryOptions(sortedCategories);
+    })
+    .then(() => {
+      getAllAccounts();
     })
     .catch((error) => {
       message.error({
@@ -118,80 +129,75 @@ const getUserSubcategories = async () => {
   }
 };
 
-onMounted(getAllCategories); 
+const getAllAccounts = async () => {
+  axios.get(`${baseURL}/accounts?user=${userId}`)
+    .then((response) => {
+      accounts.push(...response.data);
+    })
+    .then(() => {
+      modal.value.setAccountOptions(accounts);
+    })
+    .then(() => {
+      getAllTransactions();
+    })
+    .catch((error) => {
+      message.error({
+        title: 'Error',
+        content: 'There was an error loading your accounts. Please try again later.'
+      });
+      console.log(error);
+    });
+};
+
+const getAllTransactions = async () => {
+  axios.get(`${baseURL}/transactions?user=${userId}`)
+    .then((response) => {
+      data.push(...response.data);
+    })
+    .then(() => {
+      getCategoryFilterOptions();
+      getAccountFilterOptions();
+      getTypeFilterOptions();
+    })
+    .catch((error) => {
+      message.error({
+        title: 'Error',
+        content: 'There was an error loading your transactions. Please try again later.'
+      });
+      console.log(error);
+    });
+};
+
+onMounted(()=> {
+  populateData();
+});
 
 
 const openTransactionModal = (currentTitle, transaction) => {
   modal.value.openModal(currentTitle, transaction);
 };
 
-const accountTypes = {
-  0: 'Checking',
-  1: 'Savings',
-  2: 'Credit Card',
-  3: 'Cash',
-  4: 'Investment'
-}
-
-const types = {
-  0: 'Income',
-  1: 'Expense',
-  2: 'Other', 
-}
-
-const categoryTypes = {
-  0: 'Salary',
-  1: 'Bonuses',
-  2: 'Investments',
-  3: 'Business',
-  4: 'Rentals',
-  5: 'Royalties',
-  6: 'Pensions',
-  7: 'Interest',
-  8: 'Alimony',
-  9: 'Gifts',
-  10: 'Housing',
-  11: 'Utilities',
-  12: 'Groceries',
-  13: 'Dining',
-  14: 'Transport',
-  15: 'Vehicle',
-  16: 'Health',
-  17: 'Entertainment',
-  18: 'Clothing',
-  19: 'Education',
-}
-
-const getFilterOptions = (obj) => {
-  return Object.values(obj).map((v) => {
-    return {label: v, value: v};
-  });
+const getCategoryFilterOptions = () => {
+  const uniqueAliases = [...new Set(data.map((row) => row.category))];
+  categoryOptions.push(...uniqueAliases.map((alias) => {
+    return {label: sortedCategories.find((category) => category.alias === alias).name, value: alias};
+  }));
 };
 
-const getRandomInt = (max) => {
-  return Math.floor(Math.random() * max);
-}
-
-// get random date between 2020 and currrent date
-const getRandomDate = () => {
-  const start = new Date(2020, 0, 1);
-  const end = new Date();
-  return new Date(
-    start.getTime() + Math.random() * (end.getTime() - start.getTime())
-  );
+const getAccountFilterOptions = () => {
+  const uniqueAccounts = [...new Set(data.map((row) => row.account))];
+  accountOptions.push(...uniqueAccounts.map((account) => {
+    return {label: accounts.find((acc) => acc._id === account).name, value: account};
+  }));
 };
 
-// let data = reactive(Array.from({ length: 100 }).map((_, index) => ({
-//   key: index + 1,
-//   date: getRandomDate(),
-//   amount: getRandomInt(1000),
-//   description: `This is a description and it is so so so so long ${index + 1}`,
-//   category: categoryTypes[getRandomInt(20)],
-//   type: types[getRandomInt(3)],
-//   account: accountTypes[getRandomInt(5)]
-// })));
-
-let data = reactive([]);
+const getTypeFilterOptions = () => {
+  const capitalizedType = (type) => type.charAt(0).toUpperCase() + type.slice(1);
+  const uniqueTypes = [...new Set(data.map((row) => row.type))];
+  typeOptions.push(...uniqueTypes.map((type) => {
+    return {label: capitalizedType(type), value: type};
+  }));
+};
 
 const columns = [
   { 
@@ -204,7 +210,7 @@ const columns = [
     width: 125,
     sorter: (row1, row2) => row1.date - row2.date,
     render(row) {
-      return row.date.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' });
+      return new Date(row.date).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' });
     }
   },
   { 
@@ -229,27 +235,28 @@ const columns = [
   {
     title: "Type",
     key: "type",
-    width: 110,
+    width: 200,
     render(row) {
       return h(
         NTag, 
-        { type: row.type === 'Income' ? 'success' : row.type === 'Expense' ? 'error' : 'default' }, 
+        { type: row.type === 'income' ? 'success' : row.type === 'expense' ? 'error' : 'default',
+        class: 'capitalize' }, 
         { default: () => row.type }
       )
     },
-    filterOptions: getFilterOptions(types),
+    filterOptions: typeOptions,
     filter: (value, row) => {
       return row.type === value
     }
   },
   { 
     title: "Category", 
-    key: "category", 
-    width: 150,
+    key: "175", 
+    width: 200,
     render(row) {
-      return sortedCategories.find((category) => category._id === row.category).name;
+      return sortedCategories.find((category) => category.alias === row.category).name;
     },
-    filterOptions: getFilterOptions(categoryTypes),
+    filterOptions: categoryOptions,
     filter: (value, row) => {
       return row.category === value
     }
@@ -258,10 +265,13 @@ const columns = [
     title: "Account", 
     key: "account", 
     width: 150,
-    filterOptions: getFilterOptions(accountTypes),
+    filterOptions: accountOptions,
     filter: (value, row) => {
       return row.account === value
     }, 
+    render(row) {
+      return accounts.find((account) => account._id === row.account).name;
+    },
   },
   {
     title: "",
@@ -271,7 +281,7 @@ const columns = [
     render(row) {
       const renderIcon = icon => () => h(Icon, { icon });
       const handleDropdownSelection = (selectedKey) => {
-        selectedKey === 'edit' ? openTransactionModal("Edit Transaction", row) : handleDelete(row.key);
+        selectedKey === 'edit' ? openTransactionModal("Edit Transaction", row) : handleDelete(row);
       };
 
       return h(
@@ -339,11 +349,22 @@ const exportToCSV = () => {
 };
 
 const addTransaction = (newTransaction) => {
-  data.push(newTransaction);
-  message.success(
-    `${newTransaction.description} added successfully!`,
-    { duration: 5e3 }
-  );
+  newTransaction.user = userId;
+  axios.post(`${baseURL}/transactions`, newTransaction)
+    .then((response) => {
+      data.push(response.data);
+      message.success(
+        `${newTransaction.description} added successfully!`,
+        { duration: 5e3 }
+      );
+    })
+    .catch((error) => {
+      message.error({
+        title: 'Error',
+        content: 'There was an error adding your transaction. Please try again later.'
+      });
+      console.log(error);
+    })
 };
 
 const editTransaction = (newTransaction) => {
@@ -355,23 +376,31 @@ const editTransaction = (newTransaction) => {
   );
 };
 
-const deleteTransaction = (key, displayMessage=true) => {
-  const index = data.findIndex((row) => row.key === key);
-  const deletedTransaction = data[index];
-  data.splice(index, 1);
-  displayMessage && message.success(
-    `${deletedTransaction.description} deleted successfully!`,
-    { duration: 5e3 }
-  );
+const deleteTransaction = (transaction, displayMessage=true) => {
+  axios.delete(`${baseURL}/transactions/${transaction._id}`)
+    .then(() => {
+      const transactionIndex = data.findIndex((row) => row._id === transaction._id);
+      data.splice(transactionIndex, 1);
+      displayMessage && message.success(
+        `${deletedTransaction.description} deleted successfully!`,
+        { duration: 5e3 }
+      );
+    })
+
 };
 
-const handleDelete = (key) => {
+const handleDelete = (transaction) => {
   dialog.error({
     title: 'Delete Transaction',
-    content: 'Are you sure you want to delete this transaction? This action cannot be undone.',
+    content: () => {
+      return h('div', [
+        h('p', 'Are you sure you want to delete this transaction? This action cannot be undone.'),
+        h('p', { class: 'font-semibold' }, `This action cannot be undone.`)
+      ]);
+    },
     positiveText: 'Delete',
     negativeText: 'Cancel',
-    onPositiveClick: () => { deleteTransaction(key) }
+    onPositiveClick: () => { deleteTransaction(transaction) }
   })
 };
 
