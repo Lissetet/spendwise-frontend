@@ -6,7 +6,7 @@ import Overview from './pages/Overview.vue';
 import Transactions from './pages/Transactions.vue';
 import Accounts from './pages/Accounts.vue';
 import Goals from './pages/Goals.vue';
-import Bills from './pages/Bills.vue';
+import Events from './pages/Events.vue';
 import Budgets from './pages/Budgets.vue';
 import Categories from './pages/Categories.vue';
 import NetWorth from './pages/NetWorth.vue';
@@ -33,7 +33,7 @@ const routes = [
   getProtectedRoute('/accounts', Accounts),
   getProtectedRoute('/transactions', Transactions),
   getProtectedRoute('/goals', Goals),
-  getProtectedRoute('/bills', Bills),
+  getProtectedRoute('/events', Events),
   getProtectedRoute('/budgets', Budgets),
   getProtectedRoute('/categories', Categories),
   getProtectedRoute('/net-worth', NetWorth),

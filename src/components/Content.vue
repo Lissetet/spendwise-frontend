@@ -131,7 +131,7 @@ const menuNavOptions = [
   getOption("Accounts", "accounts", "/accounts"),
   getOption("Transactions", "transactions", "/transactions"),
   getOption("Goals WIP", "goals", "/goals"),
-  getOption("Bills WIP", "bills", "/bills"),
+  getOption("Events", "events", "/events"),
   getOption("Budgets WIP", "budgets", "/budgets"),
   getOption("Categories", "categories", "/categories"),
   getOption("Net Worth WIP", "net-worth", "/net-worth"),
