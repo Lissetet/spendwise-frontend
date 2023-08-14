@@ -394,13 +394,13 @@ const editTransaction = (editedTransaction) => {
     })
 };
 
-const deleteTransaction = (transaction, displayMessage=true) => {
-  axios.delete(`${baseURL}/transactions/${transaction._id}`)
+const deleteTransaction = (_id, description=false) => {
+  axios.delete(`${baseURL}/transactions/${_id}`)
     .then(() => {
-      const transactionIndex = data.findIndex((row) => row._id === transaction._id);
+      const transactionIndex = data.findIndex((row) => row._id === _id);
       data.splice(transactionIndex, 1);
-      displayMessage && message.success(
-        `${deletedTransaction.description} deleted successfully!`,
+      description && message.success(
+        `${description} deleted successfully!`,
         { duration: 5e3 }
       );
     })
@@ -418,19 +418,24 @@ const handleDelete = (transaction) => {
     },
     positiveText: 'Delete',
     negativeText: 'Cancel',
-    onPositiveClick: () => { deleteTransaction(transaction) }
+    onPositiveClick: () => { deleteTransaction(transaction._id, transaction.description) }
   })
 };
 
 const handleDeleteMultiple = () => {
   dialog.error({
     title: 'Delete Transactions',
-    content: 'Are you sure you want to delete these transactions? This action cannot be undone.',
+    content: () => {
+      return h('div', [
+        h('p', 'Are you sure you want to delete these transactions? This action cannot be undone.'),
+        h('p', { class: 'font-semibold' }, `This action cannot be undone.`)
+      ]);
+    },
     positiveText: 'Delete',
     negativeText: 'Cancel',
     onPositiveClick: () => { 
       checkedRowKeys.value.forEach((key) => {
-        deleteTransaction(key, false);
+        deleteTransaction(key);
       })
       message.success(
         `${checkedRowKeys.value.length} transactions deleted successfully!`,
