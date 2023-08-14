@@ -16,7 +16,11 @@
         <Icon icon="material-symbols:delete" class="pr-2"/>
         Delete Multiple
       </n-button>
-      <edit-multiple-transactions :disabled="!multipleChecked" @handle-edit-multiple="handleEditMultiple"/>
+      <edit-multiple-transactions 
+        ref="multipleModal"
+        :disabled="!multipleChecked" 
+        @handle-edit-multiple="handleEditMultiple"
+      />
       <n-button type="primary" @click="openTransactionModal('Add Transaction')">
         <Icon icon="material-symbols:add" class="pr-2"/>
         Add Transaction
@@ -72,6 +76,7 @@ import EditMultipleTransactions from "@/components/EditMultipleTransactions.vue"
 const message = useMessage();
 const dialog = useDialog();
 const modal = ref(null);
+const multipleModal = ref(null);
 
 const multipleChecked = ref(false);
 const data = reactive([]);
@@ -102,6 +107,7 @@ const populateData = async () => {
     })
     .then(() => {
       modal.value.setCategoryOptions(sortedCategories);
+      multipleModal.value.setCategoryOptions(sortedCategories);
     })
     .then(() => {
       getAllAccounts();
@@ -136,6 +142,7 @@ const getAllAccounts = async () => {
     })
     .then(() => {
       modal.value.setAccountOptions(accounts);
+      multipleModal.value.setAccountOptions(accounts);
     })
     .then(() => {
       getAllTransactions();
@@ -465,14 +472,26 @@ const handleEditMultiple = (obj) => {
     { duration: 5e3 }
   );
   if (!allNull) {
-    checkedRowKeys.value.forEach((key) => {
-      const index = data.findIndex((row) => row.key === key);
-      Object.keys(obj).forEach((transactionKey) => {
-        // Only overwrite if the value in newTransaction is not null
-        if (obj[transactionKey] !== null) {
-          data[index][transactionKey] = obj[transactionKey];
-        }
-      });
+    const requestBody = {};
+    Object.keys(obj).forEach((transactionKey) => {
+      if (obj[transactionKey] !== null) {
+        requestBody[transactionKey] = obj[transactionKey];
+      }
+    });
+
+    checkedRowKeys.value.forEach((_id) => {
+      axios.patch(`${baseURL}/transactions/${_id}`, requestBody)
+        .then(() => {
+          const transactionIndex = data.findIndex((row) => row._id === _id);
+          data[transactionIndex] = {...data[transactionIndex], ...requestBody};
+        })
+        .catch((error) => {
+          message.error({
+            title: 'Error',
+            content: 'There was an error updating your transaction. Please try again later.'
+          });
+          console.log(error);
+        })
     })
     message.success(
       `${checkedRowKeys.value.length} transactions updated successfully!`,
@@ -481,5 +500,4 @@ const handleEditMultiple = (obj) => {
     checkedRowKeys.value.splice(0, checkedRowKeys.value.length);
   }
 }
-
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <n-button @click="showEditMultiple = true" :disabled="disabled">
+  <n-button @click="openMultipleModal" :disabled="disabled">
     <Icon icon="material-symbols:edit" class="pr-2" />
     Edit Multiple
   </n-button>
@@ -70,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, defineEmits, defineProps } from "vue";
+import { ref, defineEmits, defineProps, defineExpose } from "vue";
 import { NButton, NModal, NCard, NForm, NFormItem, NSelect, NDatePicker, NInput, useMessage } from 'naive-ui';
 import { Icon } from '@iconify/vue';
 
@@ -96,7 +96,12 @@ const setEmptyModel = () => {
 
 setEmptyModel();
 
-const getOptions = (options) => {
+const openMultipleModal = () => {
+  setEmptyModel();
+  showEditMultiple.value = true;
+};
+
+const getTypeOptions = (options) => {
   return options.map((v) => {
     const capitalized = v.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     return {
@@ -106,30 +111,37 @@ const getOptions = (options) => {
   });
 };
 
-const typeOptions = getOptions(["Income", "Expense", "Transfer"]);
-const accountOptions = getOptions(["Cash", "Credit Card", "Bank Account"]);
-const categoryOptions = getOptions([
-  "Salary",
-  "Bonuses",
-  "Investments",
-  "Business",
-  "Rentals",
-  "Royalties",
-  "Pensions",
-  "Interest",
-  "Alimony",
-  "Gifts",
-  "Housing",
-  "Utilities",
-  "Groceries",
-  "Dining",
-  "Transport",
-  "Vehicle",
-  "Health",
-  "Entertainment",
-  "Clothing",
-  "Education"
-]);
+const getCatergoryOptions = (options) => {
+  return options.map((v) => {
+    return {
+      label: v.name,
+      value: v.alias,
+      style: v.parent === 'root' ? {} : { paddingLeft: '1.5rem'},
+      class: v.parent === 'root' ? 'font-extrabold' : ''
+    };
+  });
+};
+
+const getAccountOptions = (options) => {
+  return options.map((v) => {
+    return {
+      label: v.name,
+      value: v._id
+    };
+  });
+};
+
+const setCategoryOptions = (options) => {
+  categoryOptions.value = getCatergoryOptions(options);
+};
+
+const setAccountOptions = (options) => {
+  accountOptions.value = getAccountOptions(options);
+};
+
+const typeOptions = getTypeOptions(["income", "expense", "adjustment", "transfer"]);
+const accountOptions = ref([]);
+const categoryOptions = ref([]);
 
 const getRuleObject = (message) => {
   return {
@@ -171,4 +183,6 @@ const handleValidateButtonClick = (e) => {
 
   showEditMultiple.value = false;
 };
+
+defineExpose({ setCategoryOptions, setAccountOptions });
 </script>
