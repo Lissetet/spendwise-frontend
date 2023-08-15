@@ -62,7 +62,7 @@ import { ref, h, reactive, onMounted, inject } from "vue";
 import { useAuth0 } from '@auth0/auth0-vue';
 const { user } = useAuth0();
 import { Icon } from "@iconify/vue";
-import { NDataTable, NButton, NStatistic, NDropdown, useMessage, useDialog } from "naive-ui";
+import { NDataTable, NButton, NStatistic, NDropdown, useMessage, useDialog, NCard } from "naive-ui";
 import axios from "axios";
 import AccountModal from "@/components/AccountModal.vue";
 
@@ -91,7 +91,6 @@ const accountTypes = reactive({
 })
 
 const totalValues = reactive({})
-
 const data = ref([]);
 
 const setData = (rawData) => {

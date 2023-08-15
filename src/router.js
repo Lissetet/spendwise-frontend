@@ -8,7 +8,7 @@ import Budgets from './pages/Budgets.vue';
 import Categories from './pages/Categories.vue';
 import NetWorth from './pages/NetWorth.vue';
 import Settings from './pages/Settings.vue';
-import Help from './pages/Help.vue';
+import Contact from './pages/Contact.vue';
 import Profile from './pages/Profile.vue';
 import { createAuthGuard } from "@auth0/auth0-vue";
 
@@ -35,7 +35,7 @@ const routes = [
   getProtectedRoute('/categories', Categories),
   getProtectedRoute('/net-worth', NetWorth),
   getProtectedRoute('/settings', Settings),
-  getProtectedRoute('/help', Help),
+  getProtectedRoute('/contact', Contact),
   getProtectedRoute('/profile', Profile),
 ];
 

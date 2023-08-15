@@ -28,10 +28,12 @@
             <Icon icon="mi:notification" class="pr-2"/>
             Notifications
           </n-button>
-          <n-button quaternary>
-            <Icon icon="material-symbols:help-outline" class="pr-2"/>
-            Help
-          </n-button>
+          <router-link to="/contact">
+            <n-button quaternary>
+              <Icon icon="material-symbols:help-outline" class="pr-2"/>
+              Contact
+            </n-button>
+          </router-link>
         </div>
       </n-space>
       <n-divider />
@@ -134,7 +136,7 @@ const menuNavOptions = [
   getOption("Net Worth", "net-worth", "/net-worth"),
   getDividerOption(),
   getOption("Settings", "settings", "/settings", true),
-  getOption("Help", "help", "/help", true),
+  getOption("Contact", "contact", "/contact", true),
   getDividerOption(),
   getOption("Profile", "profile", "/profile", true),
   getLogOut(),
