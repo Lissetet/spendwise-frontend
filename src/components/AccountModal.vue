@@ -115,7 +115,6 @@ const typeOptions = getOptions([
   'credit',
   'loan', 
   'property',
-  'other'
 ]);
 
 const getRuleObject = (message, required=true) => {

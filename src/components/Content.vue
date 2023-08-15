@@ -22,9 +22,6 @@
     </n-layout-sider>
     <n-layout content-style="padding: 1rem 2rem">
       <n-space class="flex gap-20 w-full -mb-3 text-xs" justify="end" align="center">
-        <!-- <n-button quaternary @click="toggleCollapse" aria-label="Toggle Menu" class="flex my-auto lg:hidden">
-          <Icon icon="material-symbols:menu" class="text-xl"/>
-        </n-button> -->
         <div>
           <feedback-modal />
           <n-button quaternary>
@@ -131,13 +128,14 @@ const menuNavOptions = [
   getOption("Overview", "overview", "/overview", true),
   getOption("Accounts", "accounts", "/accounts"),
   getOption("Transactions", "transactions", "/transactions"),
-  getOption("Goals", "goals", "/goals", true),
   getOption("Events", "events", "/events"),
   getOption("Budgets", "budgets", "/budgets", true),
   getOption("Categories", "categories", "/categories"),
-  getOption("Net Worth", "net-worth", "/net-worth", true),
+  getOption("Net Worth", "net-worth", "/net-worth"),
   getDividerOption(),
   getOption("Settings", "settings", "/settings", true),
+  getOption("Help", "help", "/help", true),
+  getDividerOption(),
   getOption("Profile", "profile", "/profile", true),
   getLogOut(),
 ];

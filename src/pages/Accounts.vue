@@ -23,9 +23,9 @@
       </span>
     </n-statistic>
     <div class="bg-gray-200 w-px mx-6"/>
-    <n-statistic label="Total Property & Other">
+    <n-statistic label="Total Property">
       <span class="font-semibold text-base">
-        {{ formatCurrency(totalValues.other) }}
+        {{ formatCurrency(totalValues.property) }}
       </span>
     </n-statistic>
     <div class="bg-gray-200 w-px mx-6"/>
@@ -47,7 +47,6 @@
     :data="data"
     :row-class-name="row => row.children && 'font-bold'"
     :summary="createSummary"
-    @update:checked-row-keys="handleCheck"
     :row-key="row => row._id ? row._id : row.key"
     default-expand-all
     class="mb-10"
@@ -70,8 +69,6 @@ const message = useMessage();
 const dialog = useDialog();
 const modal = ref(null);
 
-const multipleChecked = ref(false);
-
 const openAccountModal = (currentTitle, account) => {
   modal.value.openModal(currentTitle, account);
 };
@@ -86,7 +83,6 @@ const accountTypes = reactive({
   credit: {},
   loan: {},
   property: {},
-  other: {},
 })
 
 const totalValues = reactive({})
@@ -94,7 +90,7 @@ const totalValues = reactive({})
 const data = ref([]);
 
 const setData = (rawData) => {
-  const accountTypesList = ['cash', 'checking', 'savings', 'investment', 'credit', 'loan', 'property', 'other']
+  const accountTypesList = ['cash', 'checking', 'savings', 'investment', 'credit', 'loan', 'property']
   accountTypesList.forEach((accountType, index) => {
     const children = rawData.filter(account => account.type === accountType);
     accountTypes[accountType] = {
@@ -113,8 +109,8 @@ const setData = (rawData) => {
   totalValues.cash = accountTypes.cash.balance + accountTypes.checking.balance + accountTypes.savings.balance;
   totalValues.debt = accountTypes.credit.balance + accountTypes.loan.balance;
   totalValues.investments = accountTypes.investment.balance;
-  totalValues.other = accountTypes.property.balance + accountTypes.other.balance;
-  totalValues.all = accountTypes.cash.balance + accountTypes.checking.balance + accountTypes.savings.balance + accountTypes.credit.balance + accountTypes.loan.balance + accountTypes.investment.balance + accountTypes.property.balance + accountTypes.other.balance;
+  totalValues.property = accountTypes.property.balance;
+  totalValues.all = accountTypes.cash.balance + accountTypes.checking.balance + accountTypes.savings.balance + accountTypes.credit.balance + accountTypes.loan.balance + accountTypes.investment.balance + accountTypes.property.balance;
 };
 
 const getAllAccounts = async () => {
@@ -130,16 +126,11 @@ const getAllAccounts = async () => {
 
 onMounted(getAllAccounts);
 
-
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 };
 
 const columns = reactive([
-  {
-    type: "selection",
-    disabled: (row) => !!row.children,
-  },
   {
     title: "Account",
     key: "name", 
@@ -204,13 +195,6 @@ const createSummary = (data) => {
   };
 };
 
-const checkedRowKeys = ref([]);
-const handleCheck = (rowKeys) => {
-  console.log(rowKeys)
-  checkedRowKeys.value = rowKeys;
-  multipleChecked.value = rowKeys.length > 1;
-};
-
 const addAccount = (accountData) => {
   let newAccount = {}
   const accountBody = {
@@ -221,7 +205,7 @@ const addAccount = (accountData) => {
   axios.post(`${baseURL}/accounts`, accountBody)
     .then(response => {
       newAccount = response.data;
-      if (accountData.balance > 0) {
+      if (accountData.balance !== 0) {
         const transactionBody = {
           user: userId,
           account: newAccount._id,
