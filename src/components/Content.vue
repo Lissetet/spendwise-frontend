@@ -101,13 +101,14 @@ const getDividerOption = () => {
   }
 };
 
-const getOption = (label, key, to) => {
+const getOption = (label, key, to, disabled=false) => {
   return {
     label: () => h(
       RouterLink, { to }, { default: () => label }
     ),
     active: () => router.currentRoute.value.path === to,
-    key
+    key,
+    disabled
   };
 };
 
@@ -127,17 +128,17 @@ const getLogOut = () => {
 const menuNavOptions = [
   getHeaderOption(),
   getDividerOption(),
-  getOption("Overview WIP", "overview", "/overview"),
+  getOption("Overview", "overview", "/overview", true),
   getOption("Accounts", "accounts", "/accounts"),
   getOption("Transactions", "transactions", "/transactions"),
-  getOption("Goals WIP", "goals", "/goals"),
+  getOption("Goals", "goals", "/goals", true),
   getOption("Events", "events", "/events"),
-  getOption("Budgets WIP", "budgets", "/budgets"),
+  getOption("Budgets", "budgets", "/budgets", true),
   getOption("Categories", "categories", "/categories"),
-  getOption("Net Worth WIP", "net-worth", "/net-worth"),
+  getOption("Net Worth", "net-worth", "/net-worth", true),
   getDividerOption(),
-  getOption("Settings WIP", "settings", "/settings"),
-  getOption("Profile WIP", "profile", "/profile"),
+  getOption("Settings", "settings", "/settings", true),
+  getOption("Profile", "profile", "/profile", true),
   getLogOut(),
 ];
 

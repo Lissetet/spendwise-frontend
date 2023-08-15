@@ -37,16 +37,21 @@
   </n-calendar>
 </template>
 `<script setup>
-import { ref, h } from "vue";
+import { useAuth0 } from '@auth0/auth0-vue';
+import { ref, h, onMounted } from "vue";
 import { Icon } from '@iconify/vue';
 import { NCalendar, NTag, NDropdown, NButton, NInput, NSelect, NDatePicker } from "naive-ui";
 import { addDays } from 'date-fns/esm'
+import axios from 'axios';
+
+const baseURL = import.meta.env.VITE_BASE_URL;
+const { user } = useAuth0();
 
 const dateValue = ref(null)
 const tagValue = ref(null)
 const typeValue = ref(null)
-const dateIndex = ref(0)
 const dates = ref([]);
+const userId = user._rawValue.sub;
 
 const renderIcon = icon => () => h(Icon, { icon });
 const renderTag = ({ option }) => {
@@ -84,6 +89,7 @@ const handleDropdownSelection = (key, id) => {
   if (key === "delete") {
     dates.value.splice(index, 1);
   } else {
+    console.log(dates.value[index])
    dates.value[index] = {
     ...dates.value[index],
     tag: "New Tag",
@@ -100,13 +106,31 @@ const getYearMonthDate = (date) => {
 
 const addSingleDate = () => {
   const dateObj = getYearMonthDate(new Date(dateValue.value));
-  dates.value.push({
+  const newSingleDate = {
     ...dateObj,
-    _id: dateIndex.value++,
     tag: tagValue.value,
     type: typeValue.value,
-  })
+    user: userId,
+  }
+  axios.post(`${baseURL}/events`, newSingleDate)
+    .then((res) => {
+      dates.value.push(res.data);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 };
 
+const getAllEvents = () => {
+  axios.get(`${baseURL}/events?user=${userId}`)
+    .then((res) => {
+      dates.value = res.data;
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+};
+
+onMounted(getAllEvents);
 const value = ref(addDays(Date.now(), 0).valueOf());
 </script>
