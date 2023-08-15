@@ -34,7 +34,7 @@ import axios from 'axios'
 import { useAuth0 } from '@auth0/auth0-vue';
 import { Icon } from '@iconify/vue'
 
-import { NCard, NStatistic, NNumberAnimation, NButton, useMessage } from 'naive-ui'
+import { NCard, NStatistic, NNumberAnimation, NButton, useMessage, NTree } from 'naive-ui'
 
 const baseURL = import.meta.env.VITE_BASE_URL;
 const { user } = useAuth0();

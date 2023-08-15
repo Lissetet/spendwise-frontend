@@ -4,38 +4,40 @@
     ref="modal"
     @handle-save="handleSave"
   />
+  <n-card class="w-fit">
   <div class="flex">
     <n-statistic label="Total Cash">
       <span class="font-semibold text-base">
         {{ formatCurrency(totalValues.cash) }}
       </span>
     </n-statistic>
-    <div class="bg-gray-200 w-px mx-6"/>
+    <div :class="`${isDark ? 'bg-neutral-800' : 'bg-neutral-100'} w-px mx-6`"/>
     <n-statistic label="Total Debt">
       <span class="font-semibold text-base">
         {{ formatCurrency(totalValues.debt) }}
       </span>
     </n-statistic>
-    <div class="bg-gray-200 w-px mx-6"/>
+    <div :class="`${isDark ? 'bg-neutral-800' : 'bg-neutral-100'} w-px mx-6`"/>
     <n-statistic label="Total Investments">
       <span class="font-semibold text-base">
         {{ formatCurrency(totalValues.investments) }}
       </span>
     </n-statistic>
-    <div class="bg-gray-200 w-px mx-6"/>
+    <div :class="`${isDark ? 'bg-neutral-800' : 'bg-neutral-100'} w-px mx-6`"/>
     <n-statistic label="Total Property">
       <span class="font-semibold text-base">
         {{ formatCurrency(totalValues.property) }}
       </span>
     </n-statistic>
-    <div class="bg-gray-200 w-px mx-6"/>
+    <div :class="`${isDark ? 'bg-neutral-800' : 'bg-neutral-100'} w-px mx-6`"/>
     <n-statistic label="Net Total">
       <span class="font-semibold text-base">
         {{ formatCurrency(totalValues.all) }}
       </span>
     </n-statistic>
   </div>
-  <div class="flex justify-end my-6 gap-4">
+</n-card>
+  <div class="flex justify-start my-10 gap-4">
     <n-button type="primary" @click="openAccountModal('Add Account')">
       <Icon icon="material-symbols:add" class="pr-2"/>
       Add Account
@@ -54,7 +56,9 @@
 </template>
 
 <script setup>
-import { ref, h, reactive, onMounted } from "vue";
+
+
+import { ref, h, reactive, onMounted, inject } from "vue";
 import { useAuth0 } from '@auth0/auth0-vue';
 const { user } = useAuth0();
 import { Icon } from "@iconify/vue";
@@ -64,6 +68,7 @@ import AccountModal from "@/components/AccountModal.vue";
 
 const baseURL = import.meta.env.VITE_BASE_URL;
 const userId = user._rawValue.sub;
+const isDark = inject('isDarkTheme', ref('isDarkTheme'));
 
 const message = useMessage();
 const dialog = useDialog();

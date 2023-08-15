@@ -1,25 +1,27 @@
 <template>
   <h1>Events</h1>
-  <n-calendar class="mb-10">
-    <template #default="{ year, month, date }">
-      <div class="flex flex-col gap-1">
-        <template v-for="item in dates">
-          <div 
-            :key="item._id"
-            class="flex gap-2" 
-            v-if="year === item.year && month === item.month && date === item.day"
-          >
-            <n-tag :type="item.type">{{ item.tag }}</n-tag>
-            <n-dropdown :options="dropDownOptions.map(option => ({ ...option, id: item._id }))" @select="(key) => handleDropdownSelection(key, item._id)">
-              <n-button text>
-                <Icon icon="material-symbols:settings" />
-              </n-button>
-            </n-dropdown>
-          </div>
-        </template>
-      </div>
-    </template>
-  </n-calendar>
+  <n-card class="mb-10">
+    <n-calendar>
+      <template #default="{ year, month, date }">
+        <div class="flex flex-col gap-1">
+          <template v-for="item in dates">
+            <div 
+              :key="item._id"
+              class="flex gap-2" 
+              v-if="year === item.year && month === item.month && date === item.day"
+            >
+              <n-tag :type="item.type">{{ item.tag }}</n-tag>
+              <n-dropdown :options="dropDownOptions.map(option => ({ ...option, id: item._id }))" @select="(key) => handleDropdownSelection(key, item._id)">
+                <n-button text>
+                  <Icon icon="material-symbols:settings" />
+                </n-button>
+              </n-dropdown>
+            </div>
+          </template>
+        </div>
+      </template>
+    </n-calendar>
+  </n-card>
   <n-button @click="handleAdd" v-if="!showForm" class="mb-10" type="primary">
     Add New Event
   </n-button>
