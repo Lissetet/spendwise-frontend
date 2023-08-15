@@ -136,7 +136,7 @@ const menuNavOptions = [
   getOption("Net Worth", "net-worth", "/net-worth"),
   getDividerOption(),
   getOption("Settings", "settings", "/settings", true),
-  getOption("Contact", "contact", "/contact", true),
+  getOption("Contact", "contact", "/contact"),
   getDividerOption(),
   getOption("Profile", "profile", "/profile", true),
   getLogOut(),
