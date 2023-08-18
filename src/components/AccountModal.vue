@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, defineEmits, h } from "vue";
+import { ref, h } from "vue";
 import { NButton, NModal, NCard, NForm, NFormItem, NSelect, NInput, useMessage, NInputNumber } from 'naive-ui';
 import { Icon } from '@iconify/vue';
 

@@ -37,7 +37,7 @@
         </div>
       </n-space>
       <n-divider />
-      <main>
+      <main class="mb-10">
         <router-view />
       </main>
     </n-layout>
@@ -48,7 +48,7 @@
 import { useAuth0 } from '@auth0/auth0-vue';
 import { Icon } from '@iconify/vue';
 import { RouterLink } from 'vue-router';
-import { NLayout, NDivider, NLayoutSider, NSpace, NMenu, NButton } from 'naive-ui';
+import { NLayout, NDivider, NLayoutSider, NSpace, NMenu, NButton, NText } from 'naive-ui';
 import { ref, h, inject, onMounted, onBeforeUnmount } from 'vue';
 import FeedbackModal from '@/components/FeedbackModal.vue';
 
@@ -77,10 +77,10 @@ onBeforeUnmount(() => {
 const getHeaderOption = () => {
   return {
     label: () => h(
-      'div',
-      { class: 'flex justify-center py-3' },
+      NText,
+      { class: 'flex justify-center py-3', type: 'primary' },
       [
-        h(Icon, { icon: 'spendwise', class: 'text-2xl' }),
+        h(Icon, { icon: 'spendwise', class: 'text-2xl mr-3' }),
         h('span', { class: 'text-base my-auto font-bold' }, 'SpendWise')
       ]
     ),
@@ -127,7 +127,7 @@ const getLogOut = () => {
 const menuNavOptions = [
   getHeaderOption(),
   getDividerOption(),
-  getOption("Overview", "overview", "/overview", true),
+  getOption("Overview", "overview", "/overview"),
   getOption("Accounts", "accounts", "/accounts"),
   getOption("Transactions", "transactions", "/transactions"),
   getOption("Events", "events", "/events"),

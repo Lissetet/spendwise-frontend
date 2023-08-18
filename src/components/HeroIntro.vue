@@ -1,11 +1,13 @@
 <template>
-  <section id="hero">
+  <section :style="store.isDark ? darkBgStyle : lightBgStyle">
     <div class="container gap-10 flex-wrap">
       <div class="">
-        <h1 class="font-extrabold text-primary text-4xl">
-          Managing money, <br>made simple.
+        <h1 class="font-extrabold text-4xl">
+          <n-text type="primary">
+            Managing money, <br>made simple.
+          </n-text>
         </h1>
-        <n-button type="primary">
+        <n-button type="primary" @click="signUp">
           Sign up for free
         </n-button>
         <h2>
@@ -15,18 +17,35 @@
       <img src="@/assets/laptop.png" alt="laptop" class=" w-96 opacity-80" />
     </div>
   </section>
-  <p class="bg-primary text-white font-extrabold text-center text-lg p-2 mt-0">
+  <n-button type="primary" strong class="font-extrabold text-center text-lg p-6 mt-0 w-full">
     Learn why Spendwise is the best way to manage your money.
-  </p>
+  </n-button>
 </template>
 
 <script setup>
-import { NButton } from 'naive-ui';
+import { NButton, NText } from 'naive-ui';
+import useUserStore from '@/store/user';
+const store = useUserStore();
+
+const props = defineProps({
+  signUp: {
+    type: Function,
+    required: true
+  }
+})
+
+const darkBgStyle =  {
+  backgroundImage: "linear-gradient(to right, rgba(0,0,0, 0.8), rgba(0,0,0, 0.8)), url('bg.svg')"
+}
+const lightBgStyle = {
+  backgroundImage: "linear-gradient(to right, rgba(225, 225, 225, 0.95), rgba(185, 227, 205, 0.95), rgba(225, 225, 225, 0.95)), url('bg.svg')"
+}
 </script>
 
 <style scoped>
 section {
   @apply p-14 flex items-center justify-center px-4 bg-cover bg-center bg-no-repeat;
+  background-image: linear-gradient(to right, rgba(0,0,0, 0.8), rgba(0,0,0, 0.8)), url('bg.svg');
   background-image: linear-gradient(to right, rgba(225, 225, 225, 0.95), rgba(185, 227, 205, 0.95), rgba(225, 225, 225, 0.95)), url('bg.svg');
 }
 

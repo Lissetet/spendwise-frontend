@@ -1,6 +1,6 @@
 <template>
   <h1>Categories</h1>
-  <n-card v-for="category in parentCategories" :key="category._id" class="mb-4">
+  <n-card v-for="category in visibleCategories" :key="category._id" class="mb-4">
     <span class="text-sm font-extrabold">{{ category.name }}
       <Icon
         icon="ion:chevron-down"
@@ -9,7 +9,7 @@
         class="transition-all duration-300"
       />
     </span>
-    <n-collapse-transition :show="show[category.alias]" class="mt-4 flex flex-wrap gap-20">
+    <n-collapse-transition :show="loading === false && show[category.alias]" class="mt-4 flex flex-wrap gap-20">
       <div class="flex-grow">
         <n-divider title-placement="left">
           <span class="text-xs">Subcategories</span>
@@ -53,7 +53,7 @@
               class="mb-2"
               type="primary"
               v-if="showAdd[category.alias] === 'add'"
-              @click="addSubcategory(category.alias)"
+              @click="handleAdd(category.alias)"
             >
               Save Add
             </n-button>
@@ -76,14 +76,10 @@
 </template>
 
 <script setup>
-import { useAuth0 } from '@auth0/auth0-vue';
-const { user } = useAuth0();
-import { onMounted, reactive } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import { Icon } from '@iconify/vue';
-import axios from 'axios';
 import { 
   useDialog, 
-  useMessage,
   NCard, 
   NButton, 
   NCollapseTransition, 
@@ -91,81 +87,40 @@ import {
   NInput 
 } from 'naive-ui';
 
-const baseURL = import.meta.env.VITE_BASE_URL;
+import useUserStore from '@/store/user';
+const store = useUserStore();
 
-const categories = reactive([]);
-const parentCategories = reactive([]);
-const userSubcategories = reactive([]);
+const loading = ref(true);
 const show = reactive({});
 const showAdd =reactive({});
 const inputValues = reactive({});
 const editingID = reactive({})
-const userId = user._rawValue.sub;
+const userId = store.user.sub;
 const dialog = useDialog();
-const message = useMessage();
+const categories = store.categories;
+const userSubcategories = store.userSubcategories;
+const visibleCategories = store.parentCategories.filter((category) =>  category.alias !== 'uncategorized' );
 
-const getAllCategories = async () => {
-  axios.get(`${baseURL}/categories?user=all`)
-    .then((response) => {
-      categories.push(...response.data);
-      parentCategories.push(...categories.filter((category) => category.parent === 'root'));
-      parentCategories.forEach((category) => {
-        show[category.alias] = false;
-        showAdd[category.alias] = 'none';
-        inputValues[category.alias] = '';
-        editingID[category.alias] = null;
-      });
-     getUserSubcategories();
-    })
-    .catch((error) => {
-      message.error({
-        title: 'Error',
-        content: 'There was an error loading your categories. Please try again later.'
-      });
-      console.log(error);
-    });
-};
-
-const getUserSubcategories = async () => {
-  axios.get(`${baseURL}/categories?user=${userId}`)
-    .then((response) => {
-      userSubcategories.push(...response.data);
-    })
-    .catch((error) => {
-      message.error({
-        title: 'Error',
-        content: 'There was an error loading your categories. Please try again later.'
-      });
-      console.log(error);
-    });
-};
-
-onMounted(getAllCategories); 
-
+onMounted(()=> {
+  store.fetchCategories();
+  visibleCategories.forEach((category) => {
+    show[category.alias] = false;
+    showAdd[category.alias] = 'none';
+    inputValues[category.alias] = '';
+    editingID[category.alias] = null;
+  });
+  loading.value = false;
+}); 
+ 
 const handleDelete = (id) => {
   dialog.error({
     title: 'Delete Subcategory',
     content: 'Are you sure you want to delete this subcategory? This action cannot be undone.',
     positiveText: 'Delete',
     negativeText: 'Cancel',
-    onPositiveClick: () => { deleteCategory(id) }
+    onPositiveClick: () => { store.deleteSubcategory(id) }
   })
 }
-
-const deleteCategory = async (id) => {
-  axios.delete(`${baseURL}/categories/${id}`)
-    .then((response) => {
-      const index = userSubcategories.findIndex((subcategory) => subcategory._id === id);
-      userSubcategories.splice(index, 1);
-    })
-    .catch((error) => {
-      message.error({
-        title: 'Error',
-        content: 'There was an error deleting your subcategory. Please try again later.'
-      });
-      console.log(error);
-    });
-};
 
 const createAlias = (category) => {
   return category
@@ -175,7 +130,7 @@ const createAlias = (category) => {
         .replace(/^-|-$/g, '');    // Remove hyphens from the start or end of the alias
 };
 
-const addSubcategory = async (alias) => {
+const handleAdd = (alias) => {
   const name = inputValues[alias];
   const body = { 
     name,
@@ -183,20 +138,9 @@ const addSubcategory = async (alias) => {
     alias: `${createAlias(name)}-${userId}`,
     user: userId
   }
-
-  axios.post(`${baseURL}/categories`, body)
-    .then((response) => {
-      userSubcategories.push(response.data);
-      showAdd[alias] = 'none';
-      inputValues[alias] = '';
-    })
-    .catch((error) => {
-      message.error({
-        title: 'Error',
-        content: 'There was an error adding your subcategory. Please try again later.'
-      });
-      console.log(error);
-    });
+  store.addSubcategory(body);
+  showAdd[alias] = 'none';
+  inputValues[alias] = '';
 };
 
 const handleEdit = (id, alias) => {
@@ -205,27 +149,16 @@ const handleEdit = (id, alias) => {
   inputValues[alias] = userSubcategories.find((subcategory) => subcategory._id === id).name;
 };
 
-const editSubcategory = async (alias) => {
+const editSubcategory = (alias) => {
   const body = { 
     name: inputValues[alias],
     alias: `${createAlias(inputValues[alias])}-${userId}`
   }
 
-  axios.patch(`${baseURL}/categories/${editingID[alias]}`, body)
-    .then((response) => {
-      const index = userSubcategories.findIndex((subcategory) => subcategory._id === editingID[alias]);
-      userSubcategories[index] = response.data;
-      showAdd[alias] = 'none';
-      inputValues[alias] = '';
-      editingID[alias] = null;
-    })
-    .catch((error) => {
-      message.error({
-        title: 'Error',
-        content: 'There was an error editing your subcategory. Please try again later.'
-      });
-      console.log(error);
-    });
+  store.editSubcategory(body, editingID[alias]);
+  showAdd[alias] = 'none';
+  inputValues[alias] = '';
+  editingID[alias] = null;
 };
 
 </script>

@@ -36,10 +36,10 @@
           </n-form-item>
           <n-form-item label="Account" path="accountValue">
             <n-select
-              remote
               v-model:value="model.accountValue"
               placeholder="Select Acccount"
               :options="accountOptions"
+              filterable
             />
           </n-form-item>
           <n-form-item label="Type" path="typeValue">
@@ -51,10 +51,10 @@
           </n-form-item>
           <n-form-item label="Category" path="categoryValue">
             <n-select
-              remote
               v-model:value="model.categoryValue"
               placeholder="Select Category"
               :options="categoryOptions"
+              filterable
             />
           </n-form-item>
           <div style="display: flex; justify-content: flex-end">
@@ -71,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, defineEmits, defineExpose } from "vue";
+import { ref } from "vue";
 import { NButton, NModal, NCard, NForm, NFormItem, NSelect, NDatePicker, NInput, NInputNumber, useMessage } from 'naive-ui';
 import { Icon } from '@iconify/vue';
 
