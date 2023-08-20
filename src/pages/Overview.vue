@@ -36,7 +36,7 @@
         />
       </n-button>
     </n-text>
-    <account-table :formatCurrency="formatCurrency" v-if="showAccountOverview"/>
+    <account-table v-if="showAccountOverview"/>
   </n-card>
 
 </template>
@@ -54,10 +54,6 @@ import EventCalendar from '@/components/EventCalendar.vue';
 const showAccountOverview = ref(true);
 const showNetWorth = ref(true);
 const showEvents = ref(true);
-
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-};
 
 onMounted(()=> {
   store.fetchCategories();

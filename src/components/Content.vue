@@ -12,12 +12,11 @@
       @collapse="collapsed = true"
       @expand="collapsed = false"
       class="h-screen py-4"
-      :style="isDarkTheme ? '' : 'border-right: 1px solid #f2f2f6;'"
+      :style="store.isDark ? '' : 'border-right: 1px solid #f2f2f6;'"
     >
       <n-menu 
         :collapsed-width="64" 
         :options="menuNavOptions" 
-        :class="{ hidden: collapsed }" 
       />
     </n-layout-sider>
     <n-layout content-style="padding: 1rem 2rem">
@@ -49,10 +48,11 @@ import { useAuth0 } from '@auth0/auth0-vue';
 import { Icon } from '@iconify/vue';
 import { RouterLink } from 'vue-router';
 import { NLayout, NDivider, NLayoutSider, NSpace, NMenu, NButton, NText } from 'naive-ui';
-import { ref, h, inject, onMounted, onBeforeUnmount } from 'vue';
+import { ref, h, onMounted, onBeforeUnmount } from 'vue';
 import FeedbackModal from '@/components/FeedbackModal.vue';
 
-const isDarkTheme = inject('isDarkTheme');
+import useUserStore from '@/store/user';
+const store = useUserStore();
 
 const { logout } = useAuth0();
 const collapsed = ref(false);
@@ -79,10 +79,12 @@ const getHeaderOption = () => {
     label: () => h(
       NText,
       { class: 'flex justify-center py-3', type: 'primary' },
-      [
-        h(Icon, { icon: 'spendwise', class: 'text-2xl mr-3' }),
-        h('span', { class: 'text-base my-auto font-bold' }, 'SpendWise')
-      ]
+      {
+        default: () => [
+          h(Icon, { icon: 'spendwise', class: 'text-2xl mr-3' }),
+          h('span', { class: 'text-base my-auto font-bold' }, 'SpendWise')
+        ]
+      }
     ),
     key: 'header',
   }

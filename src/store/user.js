@@ -6,6 +6,7 @@ const baseURL = import.meta.env.VITE_BASE_URL;
 export default defineStore("user", {
   state: () => { return {
       isDark: false,
+      themePreference: null,
       user: null,
       loading: true,
       categories: [],
@@ -53,6 +54,9 @@ export default defineStore("user", {
     },
     setIsDark(isDark) {
       this.isDark = isDark;
+    },
+    setThemePreference(themePreference) {
+      this.themePreference = themePreference;
     },
     async fetchCategories() {
       try {

@@ -24,7 +24,7 @@
         </n-divider>
         <article class="mb-4" v-if="showAdd[category.alias] !== 'edit'">
           <div class="flex items-center"
-            v-for="subcategory in userSubcategories.filter((subcategory)=>subcategory.parent === category.alias)"
+            v-for="subcategory in store.userSubcategories.filter((subcategory)=>subcategory.parent === category.alias)"
           >
             {{ subcategory.name }}
             <n-button text @click="handleDelete(subcategory._id)" class="ml-4">
@@ -98,7 +98,6 @@ const editingID = reactive({})
 const userId = store.user.sub;
 const dialog = useDialog();
 const categories = store.categories;
-const userSubcategories = store.userSubcategories;
 const visibleCategories = store.parentCategories.filter((category) =>  category.alias !== 'uncategorized' );
 
 onMounted(()=> {
@@ -146,7 +145,7 @@ const handleAdd = (alias) => {
 const handleEdit = (id, alias) => {
   showAdd[alias] = 'edit';
   editingID[alias] = id;
-  inputValues[alias] = userSubcategories.find((subcategory) => subcategory._id === id).name;
+  inputValues[alias] = store.userSubcategories.find((subcategory) => subcategory._id === id).name;
 };
 
 const editSubcategory = (alias) => {

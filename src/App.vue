@@ -1,7 +1,7 @@
 
 
 <template>
-  <n-config-provider :theme="themePreference" :themeOverrides="themeOverrides">
+  <n-config-provider :theme="store.themePreference" :themeOverrides="themeOverrides">
     <n-message-provider placement="bottom-right">
       <n-dialog-provider>
         <div v-if="!isLoading && !isAuthenticated">
@@ -18,7 +18,7 @@
 
 
 <script setup>
-import { ref, provide, watchEffect, watch } from 'vue';
+import { ref, watchEffect, watch } from 'vue';
 import { addIcon } from '@iconify/vue';
 import { useAuth0 } from '@auth0/auth0-vue';
 import useUserStore from '@/store/user';
@@ -85,15 +85,11 @@ const themeOverrides = {
   },
 }
 
-const isDarkTheme = ref(window.matchMedia("(prefers-color-scheme: dark)").matches);
-store.setIsDark(isDarkTheme.value);
-const themePreference = ref(isDarkTheme.value ? darkTheme : lightTheme);
+store.setIsDark(window.matchMedia("(prefers-color-scheme: dark)").matches);
+store.setThemePreference(store.isDark ? darkTheme : lightTheme);
 
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener('change', e => {
   store.setIsDark(e.matches)
-  isDarkTheme.value = e.matches;
-  themePreference.value = e.matches ? darkTheme : lightTheme;
+  store.setThemePreference(store.isDark ? darkTheme : lightTheme);
 });
-
-provide('isDarkTheme', isDarkTheme);
 </script>

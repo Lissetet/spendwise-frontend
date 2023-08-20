@@ -1,12 +1,12 @@
 <template>
   <n-modal v-model:show="showAccountModal">
     <n-card
-      style="width: 600px"
       :title="title"
       :bordered="false"
       size="large"
       role="dialog"
       aria-modal="true"
+      class=" w-11/12 max-w-xl"
     >
       <template #header-extra>
         <n-button text @click="showAccountModal = false">
@@ -18,30 +18,29 @@
           :model="model"
           :rules="rules"
           label-placement="left"
-          require-mark-placement="right-hanging"
           size="medium"
           label-width="auto"
-          :style="{
-            maxWidth: '640px'
-          }"
         >
-          <n-form-item label="Account Name" path="nameValue">
-            <n-input v-model:value="model.nameValue" placeholder="Account Name" />
+          <n-form-item label="Account Name" path="name">
+            <n-input v-model:value="model.name" placeholder="Account Name" />
           </n-form-item>
-          <n-form-item label="Account Type" path="typeValue">
+          <n-form-item label="Account Type" path="type">
             <n-select
-              v-model:value="model.typeValue"
+              v-model:value="model.type"
               placeholder="Select Account Type"
               :options="typeOptions"
               :render-label="renderLabel"
               class="capitalize"
             />
           </n-form-item>
-           <n-form-item label="Opening Balance" path="balanceValue" placeholder="Opening Balance" v-if="!editing">
-            <n-input-number v-model:value="model.balanceValue"/>
+           <n-form-item label="Opening Balance" path="balance" v-if="!editing">
+            <n-input-number 
+              v-model:value="model.balance" :precision="2" clearable>
+              <template #prefix>$</template>
+            </n-input-number>
           </n-form-item>
-          <div style="display: flex; justify-content: flex-end">
-            <n-button style="margin-right: 8px" @click="showAccountModal = false">
+          <div class="flex justify-end gap-4">
+            <n-button @click="showAccountModal = false">
               Cancel
             </n-button>
             <n-button type="primary" @click="handleValidateButtonClick">
@@ -55,34 +54,45 @@
 
 <script setup>
 import { ref, h } from "vue";
-import { NButton, NModal, NCard, NForm, NFormItem, NSelect, NInput, useMessage, NInputNumber } from 'naive-ui';
+import { 
+  NButton, 
+  NModal,
+  NCard, 
+  NForm, 
+  NFormItem, 
+  NSelect, 
+  NInput, 
+  useMessage, 
+  NInputNumber 
+} from 'naive-ui';
 import { Icon } from '@iconify/vue';
 
-const emit = defineEmits(['handle-edit-multiple']);
+const emit = defineEmits(['handle-save']);
 const message = useMessage();
 const showAccountModal = ref(false);
 const title = ref(null);
 const editing = ref(false);
 const formRef = ref(null);
 const emptyData = {
-    nameValue: null,
-    typeValue: null,
-    balanceValue: null
+    name: null,
+    type: null,
+    balance: null
   }
 const model = ref({...emptyData});
 
-const openModal = (modalTitle, account) => {
-  title.value = modalTitle;
+const openModal = (account) => {
   editing.value = !!account;
   if (account) {
+    title.value = 'Edit Account';
     model.value = {
       _id: account._id,
-      nameValue: account.name,
-      typeValue: account.type,
-      balanceValue: account.balance
-    }
+      name: account.name,
+      type: account.type,
+      balance: account.balance
+    };
   } else {
-    model.value = {...emptyData}
+    title.value = 'Add Account';
+    model.value = {...emptyData};
   }
   showAccountModal.value = true;
 };
@@ -93,18 +103,15 @@ const closeModal = () => {
 
 defineExpose({ openModal, closeModal });
 
-const getOptions = (options) => {
-  return options.map((v) => {
-    return {
-      label: v,
-      value: v
-    };
-  });
-};
+const getOptions = (options) => options.map((v) => ({ label: v, value: v }));
 
-const renderLabel = (option, selected) => {
+const renderLabel = (option) => {
   const label = option.label === 'credit' ? 'Credit Card' : option.label;
   return h("span", { class: 'capitalize' }, label);
+};
+
+const getRuleObject = (message, required=true, trigger=["blur", "input"]) => {
+  return { required, message, trigger };
 };
 
 const typeOptions = getOptions([
@@ -117,18 +124,10 @@ const typeOptions = getOptions([
   'property',
 ]);
 
-const getRuleObject = (message, required=true) => {
-  return {
-    required,
-    trigger: ["blur", "input"],
-    message
-  };
-};
-
 const rules = {
-  nameValue: getRuleObject("Please input account name"),
-  typeValue: getRuleObject("Please select type"),
-  balanceValue: {
+  name: getRuleObject("Please input account name"),
+  type: getRuleObject("Please select type"),
+  balance: {
     ...getRuleObject("Please enter opening balance"),
     type: "number",
     required: false
@@ -139,12 +138,13 @@ const handleValidateButtonClick = (e) => {
   e.preventDefault();
   formRef.value?.validate((errors) => {
     if (!errors) {
-      emit('handle-save', {
-        _id: model.value._id,
-        name: model.value.nameValue,
-        type: model.value.typeValue,
-        balance: model.value.balanceValue || 0,
-      }, editing.value);
+      const account = {
+        name: model.value.name,
+        type: model.value.type,
+        balance: model.value.balance || 0,
+      }
+      editing.value && (account._id = model.value._id);
+      emit('handle-save', account, editing.value);
     } 
     else {
       message.error('Unknow error, please try again.');

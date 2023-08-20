@@ -4,15 +4,15 @@
     ref="modal"
     @handle-save="handleSave"
   />
-  <account-summary :formatCurrency="formatCurrency"/>
+  <account-summary/>
   <div class="flex justify-start my-10 gap-4">
-    <n-button type="primary" @click="openAccountModal('Add Account')">
+    <n-button type="primary" @click="openAccountModal()">
       <Icon icon="material-symbols:add" class="pr-2"/>
       Add Account
     </n-button>
     <account-modal />
   </div>
-  <account-table :formatCurrency="formatCurrency"/>
+  <account-table />
 </template>
 
 <script setup>
@@ -22,39 +22,27 @@ import { NButton, useMessage } from "naive-ui";
 import AccountModal from "@/components/AccountModal.vue";
 import AccountSummary from '@/components/AccountSummary.vue';
 import AccountTable from "@/components/AccountTable.vue";
-
-
 import useUserStore from '@/store/user';
-const store = useUserStore();
 
+const store = useUserStore();
 const message = useMessage();
 const modal = ref(null);
 
-const openAccountModal = (currentTitle, account) => {
-  modal.value.openModal(currentTitle, account);
+const openAccountModal = () => {
+  modal.value.openModal();
 };
 
-onMounted(()=> {
-  store.fetchAccounts();
-});
-
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-};
+onMounted(store.fetchAccounts);
 
 const handleSave = async (newAccount, editing) => {
   if (editing) {
     store.editAccount(newAccount);
     message.success(
       `${newAccount.name} account edited successfully!`,
-      { duration: 5e3 }
     )
   } else {
     store.addAccount(newAccount);
-    message.success(
-      `${newAccount.name} account added successfully!`,
-      { duration: 5e3 }
-    )
+    message.success(`${newAccount.name} account added successfully!`)
   }
 }
 </script>

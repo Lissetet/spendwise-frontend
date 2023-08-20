@@ -1,7 +1,11 @@
 <template>
+  <AccountModal
+    ref="modal"
+    @handle-save="handleSave"
+  />
   <n-data-table
     :columns="columns"
-    :data="data"
+    :data="store.accountNestedData"
     :row-class-name="row => row.children && 'font-bold'"
     :summary="createSummary"
     :row-key="row => row._id ? row._id : row.key"
@@ -10,70 +14,54 @@
 </template>
 
 <script setup>
-import { ref, h, reactive, onMounted } from "vue";
+import { ref, h, reactive } from "vue";
 import { Icon } from "@iconify/vue";
-import { NDataTable, NButton, NDropdown, useMessage, useDialog } from "naive-ui";
-
+import { NDataTable, NDropdown, useMessage, useDialog } from "naive-ui";
+import { formatCurrency } from "@/utils";
+import AccountModal from "@/components/AccountModal.vue";
 import useUserStore from '@/store/user';
-const store = useUserStore();
 
+const store = useUserStore();
 const message = useMessage();
 const dialog = useDialog();
 const modal = ref(null);
 
-const openAccountModal = (currentTitle, account) => {
-  modal.value.openModal(currentTitle, account);
-};
-
-const data = store.accountNestedData;
-
-const props = defineProps({
-  formatCurrency: {
-    type: Function,
-    required: true
-  }
-})
+const getName = name => name === 'credit' ? 'Credit Card' : name;
 
 const columns = reactive([
   {
     title: "Account",
     key: "name", 
-    render: (row) => h('span', { class: 'capitalize' }, row.name === 'credit' ? 'Credit Card' : row.name),
+    render: (row) => h('span', { class: 'capitalize' }, getName(row.name)),
   },
   {
     title: "Balance",
     key: "balance",
     width: 200,
-    render: (row) => props.formatCurrency(row.balance)
+    align: "center",
+    render: (row) => formatCurrency(row.balance)
   },
   {
     title: "",
     key: "actions",
     align: "center",
-    width: 100,
+    width: 75,
     render(row) {
       const renderIcon = icon => () => h(Icon, { icon });
+      const getOption = (key) => ({ key, label: key, icon: renderIcon(`mdi:${key}`) });
       const handleDropdownSelection = (selectedKey) => {
-        selectedKey === 'edit' ? openAccountModal("Edit Account", row) : handleDelete(row);
+        selectedKey === 'edit' ? modal.value.openModal(row) : handleDelete(row);
       };
       const element = h(
         NDropdown,
         {
-          options: [
-            { label: 'Edit', key: 'edit', icon: renderIcon('material-symbols:edit') },
-            { label: 'Delete', key: 'delete', icon: renderIcon('material-symbols:delete') },
-          ],
+          class: 'capitalize',
+          options: ['edit', 'delete'].map(getOption),
           placement: 'left-start',
           onSelect: handleDropdownSelection,
         },
         {
-          default: () => [
-            h(
-              NButton,
-              { text: true },
-              { default: renderIcon('material-symbols:settings')}
-            )
-          ]
+          default: renderIcon('mdi:settings'),
         }
       )
       return row.children ? null : element;
@@ -83,19 +71,15 @@ const columns = reactive([
 
 const createSummary = (data) => {
   const totalBalance = data.reduce((prevValue, row) => prevValue + row.balance, 0);
+  const getSpan = (value) => h('span', { class: 'font-bold' }, value);
   return {
     name: {
-      value: h(
-        "span",
-        { class: 'font-bold' },
-        "Net Total"
-      ),
-      colSpan: 1
+      value: getSpan('Total')
     },
     balance: {
-      value: h("span", { class: 'font-bold' }, props.formatCurrency(totalBalance)),
-      colSpan: 2
+      value: getSpan(formatCurrency(totalBalance))
     },
+    actions: {},
   };
 };
 
@@ -113,11 +97,13 @@ const handleDelete = (row) => {
     negativeText: "Cancel",
     onPositiveClick: () => {
       store.deleteAccount(row._id);
-      message.success(
-        `${row.name} account deleted successfully!`,
-        { duration: 5e3 }
-      )
+      message.success(`${row.name} account deleted successfully!`)
     }
   });
+}
+
+const handleSave = async (newAccount) => {
+  store.editAccount(newAccount);
+  message.success(`${newAccount.name} account edited successfully!`)
 }
 </script>
