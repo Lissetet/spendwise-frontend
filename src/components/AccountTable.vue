@@ -39,7 +39,12 @@ const columns = reactive([
     key: "balance",
     width: 200,
     align: "center",
-    render: (row) => formatCurrency(row.balance)
+    render: (row) => {
+        return h(
+          'span',
+          formatCurrency(row.balance)
+        );
+    }
   },
   {
     title: "",

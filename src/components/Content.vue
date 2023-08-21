@@ -23,16 +23,11 @@
       <n-space class="flex gap-20 w-full -mb-3 text-xs" justify="end" align="center">
         <div>
           <feedback-modal />
-          <n-button quaternary>
+          <!-- <n-button quaternary>
             <Icon icon="mi:notification" class="pr-2"/>
             Notifications
-          </n-button>
-          <router-link to="/contact">
-            <n-button quaternary>
-              <Icon icon="material-symbols:help-outline" class="pr-2"/>
-              Contact
-            </n-button>
-          </router-link>
+          </n-button> -->
+          <contact-modal />
         </div>
       </n-space>
       <n-divider />
@@ -50,6 +45,7 @@ import { RouterLink } from 'vue-router';
 import { NLayout, NDivider, NLayoutSider, NSpace, NMenu, NButton, NText } from 'naive-ui';
 import { ref, h, onMounted, onBeforeUnmount } from 'vue';
 import FeedbackModal from '@/components/FeedbackModal.vue';
+import ContactModal from './ContactModal.vue';
 
 import useUserStore from '@/store/user';
 const store = useUserStore();
@@ -92,34 +88,37 @@ const getHeaderOption = () => {
 
 const getDividerOption = () => {
   return {
-    key: 'divider-1',
+    key: 'divider',
     type: 'divider',
     props: {
-      style: {
-        margin: '2rem'
-      }
+      style: { margin: '2rem' }
     }
   }
 };
 
-const getOption = (label, key, to, disabled=false) => {
+const getOption = (key, disabled=false) => {
+  const link = key === 'net worth' ? 'net-worth' : key;
   return {
     label: () => h(
-      RouterLink, { to }, { default: () => label }
+      RouterLink, 
+      { 
+        to: `/${link}`, 
+        class: 'capitalize font-semibold'
+      }, 
+      { default: () => key }
     ),
-    active: () => router.currentRoute.value.path === to,
+    active: () => router.currentRoute.value.path === `/${link}`,
     key,
     disabled
   };
 };
 
+
 const getLogOut = () => {
   return {
     label: () => h(
       'a',
-      {
-        onClick: () => logout({ returnTo: window.location.origin })
-      },
+      { onClick: () => logout({ returnTo: window.location.origin }) },
       { default: () => "Logout" }
     ),
     key: "logout"
@@ -129,25 +128,19 @@ const getLogOut = () => {
 const menuNavOptions = [
   getHeaderOption(),
   getDividerOption(),
-  getOption("Overview", "overview", "/overview"),
-  getOption("Accounts", "accounts", "/accounts"),
-  getOption("Transactions", "transactions", "/transactions"),
-  getOption("Events", "events", "/events"),
-  getOption("Budgets", "budgets", "/budgets", true),
-  getOption("Categories", "categories", "/categories"),
-  getOption("Net Worth", "net-worth", "/net-worth"),
+  getOption("overview"),
+  getOption("accounts"),
+  getOption("transactions"),
+  getOption("events"),
+  getOption("budgets", true),
+  getOption("categories"),
+  getOption("net worth"),
   getDividerOption(),
-  getOption("Settings", "settings", "/settings", true),
-  getOption("Contact", "contact", "/contact"),
+  getOption("settings", true),
+  getOption("contact"),
   getDividerOption(),
-  getOption("Profile", "profile", "/profile", true),
+  getOption("profile", true),
   getLogOut(),
 ];
 
 </script>
-
-<style>
-a {
-  font-weight: 500;
-}
-</style>

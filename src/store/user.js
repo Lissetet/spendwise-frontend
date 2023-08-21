@@ -13,21 +13,12 @@ export default defineStore("user", {
       parentCategories: [],
       userSubcategories: [],
       accounts: [],
-      accountTypes: {
-        cash: {},
-        checking: {},
-        savings: {},
-        investment: {},
-        credit: {},
-        loan: {},
-        property: {},
-      },
+      accountTypes: {},
       accountTotalValues: {
         cash: 0,
         debt: 0,
-        investment: 0,
+        investments: 0,
         property: 0,
-        all: 0,
       },
       accountNestedData: [],
       transactions: [],
@@ -38,15 +29,6 @@ export default defineStore("user", {
     getUser(state){
       return state.user
     },
-    getCategories(state){
-      return state.categories
-    },
-    getParentCategories(state){
-      return state.parentCategories
-    },
-    getUserSubcategories(state){
-      return state.userSubcategories
-    }
   },
   actions: {
     setUser(user) {
@@ -110,26 +92,32 @@ export default defineStore("user", {
       }
     },
     setAccountNestedData() {
-      const accountTypesList = ['cash', 'checking', 'savings', 'investment', 'credit', 'loan', 'property']
-      accountTypesList.forEach((accountType, index) => {
-        const children = this.accounts.filter(account => account.type === accountType);
-        this.accountTypes[accountType] = {
-          name: accountType,
-          children: children,
-          balance: children.reduce((acc, account) => acc + account.balance, 0),
-        };
-        this.accountNestedData[index] = {};
-        this.accountNestedData[index].key = accountType;
-        this.accountNestedData[index].name = accountType;
-        this.accountNestedData[index].balance = this.accountTypes[accountType].balance;
-        this.accountNestedData[index].children = this.accountTypes[accountType].children;
+      const types = {
+        cash: ['cash', 'checking', 'savings'],
+        debt: ['credit', 'loan'],
+        investments: ['investment'],
+        property: ['property'],
+      };
+      const allTypes = Object.values(types).flatMap(category => category);
+
+      allTypes.forEach((name, index) => {
+        const children = this.accounts.filter(account => account.type === name);
+        const balance = children.reduce((acc, account) => acc + account.balance, 0);
+
+        this.accountTypes[name] = { name, children, balance };
+        this.accountNestedData[index] = { name, balance, children };
       });
-      
-      this.accountTotalValues.cash = this.accountTypes.cash.balance + this.accountTypes.checking.balance + this.accountTypes.savings.balance;
-      this.accountTotalValues.debt = this.accountTypes.credit.balance + this.accountTypes.loan.balance;
-      this.accountTotalValues.investment = this.accountTypes.investment.balance;
-      this.accountTotalValues.property = this.accountTypes.property.balance;
-      this.accountTotalValues.all = this.accountTypes.cash.balance + this.accountTypes.checking.balance + this.accountTypes.savings.balance + this.accountTypes.credit.balance + this.accountTypes.loan.balance + this.accountTypes.investment.balance + this.accountTypes.property.balance;
+
+      const getAccountsSum = (keys) => {
+        return keys.reduce((acc, key) => acc + this.accountTypes[key].balance, 0);
+      }
+
+      for (let type in types) {
+        this.accountTotalValues[type] = getAccountsSum(types[type]);
+      }
+
+      const isCash = (account) => types.cash.includes(account.type);
+      this.accountTypes.allCash.children = this.accounts.filter(({type}) => isCash({type}));
     },
     async addAccount(accountData) {
       const accountBody = {

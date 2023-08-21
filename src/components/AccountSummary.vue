@@ -2,13 +2,13 @@
   <n-card class="w-fit">
     <div class="flex">
       <template v-for="stat in stats">
-        <n-statistic  :label="stat.label">
+        <n-statistic  :label="stat.label" class="capitalize">
           <span class="font-semibold text-base">
             {{ formatCurrency(stat.value) }}
           </span>
         </n-statistic>
         <div 
-          v-if="!stat.hideDivider" 
+          v-if="!stat.label.includes('Net')" 
           :class="`${store.isDark ? 'bg-neutral-800' : 'bg-neutral-100'} w-px mx-6`"
         />
       </template>
@@ -23,27 +23,12 @@ import { formatCurrency } from "@/utils";
 import useUserStore from '@/store/user';
 const store = useUserStore();
 
-const stats = [
-  {
-    label: "Total Cash",
-    value: store.accountTotalValues.cash
-  },
-  {
-    label: "Total Debt",
-    value: store.accountTotalValues.debt
-  },
-  {
-    label: "Total Investments",
-    value: store.accountTotalValues.investment
-  },
-  {
-    label: "Total Property",
-    value: store.accountTotalValues.property
-  },
-  {
-    label: "Net Total",
-    value: store.accountTotalValues.all,
-    hideDivider: true
+const keys = ["cash", "debt", "investments", "property", "all"]
+
+const stats = keys.map((key) => {
+  return {
+    label: key === "all" ? "Net Total" : `Total ${key}`,
+    value: store.accountTotalValues[key],
   }
-]
+})
 </script>
