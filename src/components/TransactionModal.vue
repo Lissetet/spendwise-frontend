@@ -24,7 +24,7 @@
           <n-form-item label="Date" path="date">
             <n-date-picker v-model:value="model.date" type="date" />
           </n-form-item>
-          <n-form-item label="Amount" path="amount" placeholder="Amount">
+          <n-form-item label="Amount" path="amount" placeholder="Amount" v-if="!multiple">
             <n-input-number v-model:value="model.amount" :precision="2" clearable>
               <template #prefix>$</template>
             </n-input-number>
@@ -90,7 +90,9 @@ const message = useMessage();
 const showTransactionModal = ref(false);
 const title = ref(null);
 const editing = ref(null);
+const multiple = ref(null);
 const formRef = ref(null);
+const rules = ref(null);
 const emptyData = {
   key: null,
   description: null,
@@ -101,9 +103,10 @@ const emptyData = {
   account: null
 };
 const model = ref(null);
-const emit = defineEmits(['handle-save']);
+const emit = defineEmits(['handle-save', 'handle-edit-multiple']);
 
 const openModal = (transaction) => {
+  multiple.value = false;
   editing.value = !!transaction;
   if (transaction) {
     title.value = 'Edit Transaction';
@@ -120,6 +123,15 @@ const openModal = (transaction) => {
     title.value = 'Add Transaction';
     model.value = {...emptyData};
   }
+  rules.value = singleRules;
+  showTransactionModal.value = true;
+};
+
+const openModalMultiple = () => {
+  multiple.value = true;
+  title.value = 'Edit Multiple Transactions';
+  model.value = {...emptyData};
+  rules.value = multipleRules;
   showTransactionModal.value = true;
 };
 
@@ -164,7 +176,7 @@ const getRuleObject = (message, required=true, trigger=['blur', 'input']) => {
   return { required, trigger, message };
 };
 
-const rules = {
+const singleRules = {
   description: getRuleObject("Please input description"),
   type: getRuleObject("Please select type", false),
   account: getRuleObject("Please select account"),
@@ -179,24 +191,41 @@ const rules = {
   },
 };
 
+const multipleRules = {
+  description: getRuleObject("Please input description", false),
+  type: getRuleObject("Please select type", false),
+  account: getRuleObject("Please select account", false),
+  category: getRuleObject("Please select category", false),
+  date: {
+    ...getRuleObject("Please input date", false),
+    type: "number",
+  },
+}
+
 const handleValidateButtonClick = (e) => {
   e.preventDefault();
   formRef.value?.validate((errors) => {
-    const transaction = {
-      date: new Date(model.value.date),
-      description: model.value.description,
-      account: model.value.account,
-      amount: model.value.amount,
-    };  
-    model.value.type === 'expense' && (transaction.amount = -model.value.amount);
-    model.value.type && (transaction.type = model.value.type);
-    model.value.category && (transaction.category = model.value.category);
-    model.value._id && (transaction._id = model.value._id);
-
-    if (!errors) {
+    if (!errors && !multiple.value) {
+      const transaction = {
+        date: new Date(model.value.date),
+        description: model.value.description,
+        account: model.value.account,
+        amount: model.value.amount,
+      };  
+      model.value.type === 'expense' && (transaction.amount = -model.value.amount);
+      model.value.type && (transaction.type = model.value.type);
+      model.value.category && (transaction.category = model.value.category);
+      model.value._id && (transaction._id = model.value._id);
       emit('handle-save', transaction, editing.value);
-    } 
-    else {
+    } else if (!errors && multiple.value) {
+      emit('handle-edit-multiple', {
+        date: model.value.date ? new Date(model.value.date) : null,
+        description: model.value.description,
+        category: model.value.category, 
+        type: model.value.type,
+        account: model.value.account,
+      });
+    } else {
       message.error('Unknow error, please try again.');
       console.log(errors);
     }
@@ -209,5 +238,5 @@ onMounted(() => {
   accountOptions.value = getAccountOptions(store.accounts);
 });
 
-defineExpose({ openModal, closeModal });
+defineExpose({ openModal, closeModal, openModalMultiple });
 </script>

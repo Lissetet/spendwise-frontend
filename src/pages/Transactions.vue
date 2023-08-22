@@ -2,7 +2,8 @@
   <h1>Transactions</h1>
   <TransactionModal
     ref="modal"
-    @handle-Save="handleSave"
+    @handle-save="handleSave"
+    @handle-edit-multiple="handleEditMultiple"
   />
   <div class="flex gap-10 justify-between items-center mb-4 -mt-2">
     <p align="center">
@@ -16,11 +17,10 @@
         <Icon icon="mdi:delete" class="pr-2"/>
         Delete Multiple
       </n-button>
-      <edit-multiple-transactions 
-        ref="multipleModal"
-        :disabled="!multipleChecked" 
-        @handle-edit-multiple="handleEditMultiple"
-      />
+      <n-button :disabled="!multipleChecked" @click="openMultipleModal()">
+        <Icon icon="material-symbols:edit" class="pr-2" />
+        Edit Multiple
+      </n-button>
       <n-button type="primary" @click="openTransactionModal()">
         <Icon icon="mdi:add" class="pr-2"/>
         Add Transaction
@@ -70,13 +70,10 @@ const typeOptions = reactive([]);
 const userId = user._rawValue.sub;
 
 import TransactionModal from "@/components/TransactionModal.vue";
-import EditMultipleTransactions from "@/components/EditMultipleTransactions.vue";
-
 
 const message = useMessage();
 const dialog = useDialog();
 const modal = ref(null);
-const multipleModal = ref(null);
 
 const multipleChecked = ref(false);
 const data = reactive([]);
@@ -108,6 +105,10 @@ onMounted(()=> {
 
 const openTransactionModal = (transaction) => {
   modal.value.openModal(transaction);
+};
+
+const openMultipleModal = () => {
+  modal.value.openModalMultiple();
 };
 
 const getCategoryFilterOptions = () => {
