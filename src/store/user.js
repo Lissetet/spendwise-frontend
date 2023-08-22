@@ -24,6 +24,9 @@ export default defineStore("user", {
       },
       accountNestedData: [],
       transactions: [],
+      uniqueTransactionAliases: [],
+      uniqueTransactionAccounts: [],
+      uniqueTransactionTypes: [],
       events: [],
   }},
   persist: true,
@@ -56,7 +59,7 @@ export default defineStore("user", {
         console.log(error)
       }
     },
-    async sortCategories() {
+    sortCategories() {
       this.sortedCategories = [];
       this.parentCategories.forEach(parent => {
         this.sortedCategories.push(parent);
@@ -151,8 +154,8 @@ export default defineStore("user", {
             amount: accountData.balance,
             description: 'Opening Balance',
           }
-          const transactionResponse = await axios.post(`${baseURL}/transactions`, transactionBody)
-          const newTransaction = transactionResponse.data;
+          const res = await axios.post(`${baseURL}/transactions`, transactionBody)
+          const newTransaction = res.data;
           newAccount.balance = newTransaction.amount;
           
           this.transactions.push(newTransaction);
@@ -228,6 +231,34 @@ export default defineStore("user", {
         alert(error)
         console.log(error)
       }
+    },
+    async fetchTransactions() {
+      try {
+        const res = await axios.get(`${baseURL}/transactions?user=${this.user.sub}`);
+        this.transactions = res.data;
+        this.setUniqueTransactionValues();
+      } catch (error) {
+        alert(error)
+        console.log(error)
+      }
+    },
+    async addTransaction(transactionData) {
+      transactionData.user = this.user.sub;
+      try {
+        const res = await axios.post(`${baseURL}/transactions`, transactionData)
+        this.transactions.push(res.data);
+      } catch (error) {
+        alert(error)
+        console.log(error)
+      }
+    },
+    setUniqueTransactionValues() {
+      const getUniqueValues = (key) => {
+        return [...new Set(this.transactions.map((v) => v[key]))];
+      }
+      this.uniqueTransactionAliases = getUniqueValues('category');
+      this.uniqueTransactionAccounts = getUniqueValues('account');
+      this.uniqueTransactionTypes = getUniqueValues('type');
     }
   },
 })

@@ -30,14 +30,14 @@
   <n-data-table
     size="small"
     :columns="columns"
-    :data="data"
+    :data="store.transactions"
     :pagination="pagination"
     :bordered="true"
     :row-key="row => row._id"
     @update:checked-row-keys="handleCheck"
   />
   <n-button text type="primary" @click="exportToCSV">
-    Export {{ data.length }} rows to CSV
+    Export {{ store.transactions.length }} rows to CSV
   </n-button>
 </template>
 
@@ -53,7 +53,6 @@ import {
   useDialog, 
   NDataTable
 } from "naive-ui";
-import { useAuth0 } from '@auth0/auth0-vue';
 import { formatCurrency } from "@/utils";
 import axios from 'axios';
 
@@ -62,12 +61,10 @@ import useUserStore from '@/store/user';
 const store = useUserStore();
 
 const baseURL = import.meta.env.VITE_BASE_URL;
-const { user } = useAuth0();
 
 const categoryOptions = reactive([]);
 const accountOptions = reactive([]);
 const typeOptions = reactive([]);
-const userId = user._rawValue.sub;
 
 import TransactionModal from "@/components/TransactionModal.vue";
 
@@ -76,30 +73,15 @@ const dialog = useDialog();
 const modal = ref(null);
 
 const multipleChecked = ref(false);
-const data = reactive([]);
+const data = ref([])
 
-
-const getAllTransactions = async () => {
-  axios.get(`${baseURL}/transactions?user=${userId}`)
-    .then((response) => {
-      data.push(...response.data);
-    })
-    .then(() => {
-      getCategoryFilterOptions();
-      getAccountFilterOptions();
-      getTypeFilterOptions();
-    })
-    .catch((error) => {
-      message.error({
-        title: 'Error',
-        content: 'There was an error loading your transactions. Please try again later.'
-      });
-      console.log(error);
-    });
-};
 
 onMounted(()=> {
-  getAllTransactions();
+  store.fetchTransactions();
+  data.value = store.transactions;
+  getCategoryFilterOptions();
+  getAccountFilterOptions();
+  getTypeFilterOptions();
 });
 
 
@@ -111,27 +93,33 @@ const openMultipleModal = () => {
   modal.value.openModalMultiple();
 };
 
+const getOptionForAlias = (alias) => {
+  const category = store.sortedCategories.find((category) => category.alias === alias);
+  return { label: category.name, value: alias };
+}
+
 const getCategoryFilterOptions = () => {
-  const uniqueAliases = [...new Set(data.map((row) => row.category))];
-  categoryOptions.push(...uniqueAliases.map((alias) => {
-    return {label: store.sortedCategories.find((category) => category.alias === alias).name, value: alias};
-  }));
+  categoryOptions.push(...store.uniqueTransactionAliases.map(getOptionForAlias));
 };
+
+const getOptionForAccount = (accountId) => {
+  const account = store.accounts.find(acc => acc._id === accountId);
+  return { label: account.name, value: accountId };
+}
 
 const getAccountFilterOptions = () => {
-  const uniqueAccounts = [...new Set(data.map((row) => row.account))];
-  accountOptions.push(...uniqueAccounts.map((account) => {
-    return {label: store.accounts.find((acc) => acc._id === account).name, value: account};
-  }));
+  accountOptions.push(...store.uniqueTransactionAccounts.map(getOptionForAccount));
 };
 
-const getTypeFilterOptions = () => {
+const getOptionForType = (type) => {
   const capitalizedType = (type) => type.charAt(0).toUpperCase() + type.slice(1);
-  const uniqueTypes = [...new Set(data.map((row) => row.type))];
-  typeOptions.push(...uniqueTypes.map((type) => {
-    return {label: capitalizedType(type), value: type};
-  }));
+  return { label: capitalizedType(type), value: type };
+}
+
+const getTypeFilterOptions = () => {
+  typeOptions.push(...store.uniqueTransactionTypes.map(getOptionForType));
 };
+
 
 const columns = [
   { 
@@ -153,7 +141,6 @@ const columns = [
     ellipsis: {
       tooltip: true
     },
-    resizable: true,
     sorter: (row1, row2) => row1.description.localeCompare(row2.description) 
   },
   { 
@@ -205,7 +192,7 @@ const columns = [
       return row.account === value
     }, 
     render(row) {
-      return store.accounts.find((account) => account._id === row.account).name;
+      return store.accounts.find((account) => account._id === row.account)?.name;
     },
   },
   {
@@ -269,7 +256,7 @@ const handleCheck = (rowKeys) => {
 const exportToCSV = () => {
   let csvContent = "Date,Description,Amount,Category,Type,Account\n";
 
-  data.forEach(row => {
+  store.transactions.forEach(row => {
     const account = store.accounts.find((acc) => acc._id === row.account).name;
     const category = store.sortedCategories.find((category) => category.alias === row.category).name;
     const date = new Date(row.date).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -288,22 +275,8 @@ const exportToCSV = () => {
 };
 
 const addTransaction = (newTransaction) => {
-  newTransaction.user = userId;
-  axios.post(`${baseURL}/transactions`, newTransaction)
-    .then((response) => {
-      data.push(response.data);
-      message.success(
-        `${newTransaction.description} added successfully!`,
-        { duration: 5e3 }
-      );
-    })
-    .catch((error) => {
-      message.error({
-        title: 'Error',
-        content: 'There was an error adding your transaction. Please try again later.'
-      });
-      console.log(error);
-    })
+  store.addTransaction(newTransaction);
+  message.success(`${newTransaction.description} added successfully!`);
 };
 
 const editTransaction = (editedTransaction) => {
