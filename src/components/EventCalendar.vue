@@ -15,7 +15,7 @@
             <n-tag :type="item.type">{{ item.tag }}</n-tag>
             <n-dropdown :options="dropDownOptions.map(option => ({ ...option, id: item._id }))" @select="(key) => handleDropdownSelection(key, item._id)">
               <n-button text>
-                <Icon icon="material-symbols:settings" />
+                <Icon icon="mdi:dots-vertical" />
               </n-button>
             </n-dropdown>
           </div>
@@ -49,12 +49,12 @@ const renderIcon = icon => () => h(Icon, { icon });
 const dropDownOptions = [
   {
     label: "Edit",
-    icon: renderIcon("material-symbols:edit"),
+    icon: renderIcon("mdi:edit"),
     key: "edit",
   },
   {
     label: "Delete",
-    icon: renderIcon("material-symbols:delete"),
+    icon: renderIcon("mdi:delete"),
     key: "delete",
   },
 ];

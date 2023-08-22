@@ -102,13 +102,13 @@ const handleDelete = (row) => {
     negativeText: "Cancel",
     onPositiveClick: () => {
       store.deleteAccount(row._id);
-      message.success(`${row.name} account deleted successfully!`)
+      message.success(`${row.name} deleted successfully!`)
     }
   });
 }
 
 const handleSave = async (newAccount) => {
   store.editAccount(newAccount);
-  message.success(`${newAccount.name} account edited successfully!`)
+  message.success(`${newAccount.name} edited successfully!`)
 }
 </script>

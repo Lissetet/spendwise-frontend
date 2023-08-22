@@ -11,7 +11,9 @@ export default defineStore("user", {
       loading: true,
       categories: [],
       parentCategories: [],
+      subcategories: [],
       userSubcategories: [],
+      sortedCategories: [],
       accounts: [],
       accountTypes: {},
       accountTotalValues: {
@@ -45,12 +47,24 @@ export default defineStore("user", {
         const categoriesResponse = await axios.get(`${baseURL}/categories?user=all`);
         this.categories = categoriesResponse.data
         this.parentCategories = this.categories.filter(category => category.parent === 'root')
+        this.subcategories = this.categories.filter(category => category.parent !== 'root')
         const subcategoriesResponse = await axios.get(`${baseURL}/categories?user=${this.user.sub}`);
         this.userSubcategories = subcategoriesResponse.data
+        this.sortCategories();
       } catch (error) {
         alert(error)
         console.log(error)
       }
+    },
+    async sortCategories() {
+      this.sortedCategories = [];
+      this.parentCategories.forEach(parent => {
+        this.sortedCategories.push(parent);
+        const children = this.subcategories.filter(subcategory => subcategory.parent === parent.alias)
+        this.sortedCategories.push(...children);
+        const userChildren = this.userSubcategories.filter(subcategory => subcategory.parent === parent.alias)
+        this.sortedCategories.push(...userChildren);
+      })
     },
     async addSubcategory(category) {
       try {

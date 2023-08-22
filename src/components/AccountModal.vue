@@ -35,7 +35,8 @@
           </n-form-item>
            <n-form-item label="Opening Balance" path="balance" v-if="!editing">
             <n-input-number 
-              v-model:value="model.balance" :precision="2" clearable>
+              v-model:value="model.balance" :precision="2" clearable
+            >
               <template #prefix>$</template>
             </n-input-number>
           </n-form-item>
@@ -71,14 +72,14 @@ const emit = defineEmits(['handle-save']);
 const message = useMessage();
 const showAccountModal = ref(false);
 const title = ref(null);
-const editing = ref(false);
+const editing = ref(null);
 const formRef = ref(null);
+const model = ref(null);
 const emptyData = {
     name: null,
     type: null,
     balance: null
   }
-const model = ref({...emptyData});
 
 const openModal = (account) => {
   editing.value = !!account;

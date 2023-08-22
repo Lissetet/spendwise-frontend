@@ -5,12 +5,12 @@
   </n-button>
   <n-modal v-model:show="showEditMultiple">
     <n-card
-      style="width: 600px"
       title="Edit Multiple Transactions"
       :bordered="false"
       size="large"
       role="dialog"
       aria-modal="true"
+      class=" w-11/12 max-w-xl"
     >
       <template #header-extra>
         <n-button text @click="showEditMultiple = false">
@@ -22,42 +22,38 @@
           :model="model"
           :rules="rules"
           label-placement="left"
-          require-mark-placement="right-hanging"
           size="medium"
           label-width="auto"
-          :style="{
-            maxWidth: '640px'
-          }"
         >
-          <n-form-item label="Date" path="dateValue">
-            <n-date-picker v-model:value="model.dateValue" type="date" />
+          <n-form-item label="Date" path="date">
+            <n-date-picker v-model:value="model.date" type="date" />
           </n-form-item>
-          <n-form-item label="Description" path="descriptionValue">
-            <n-input v-model:value="model.descriptionValue" placeholder="Description" />
+          <n-form-item label="Description" path="description">
+            <n-input v-model:value="model.description" placeholder="Description" />
           </n-form-item>
-          <n-form-item label="Account" path="accountValue">
+          <n-form-item label="Account" path="account">
             <n-select
-              v-model:value="model.accountValue"
+              v-model:value="model.account"
               placeholder="Select Acccount"
               :options="accountOptions"
             />
           </n-form-item>
-          <n-form-item label="Type" path="typeValue">
+          <n-form-item label="Type" path="type">
             <n-select
-              v-model:value="model.typeValue"
+              v-model:value="model.type"
               placeholder="Select Transaction Type"
               :options="typeOptions"
             />
           </n-form-item>
-          <n-form-item label="Category" path="categoryValue">
+          <n-form-item label="Category" path="category">
             <n-select
-              v-model:value="model.categoryValue"
+              v-model:value="model.category"
               placeholder="Select Category"
               :options="categoryOptions"
             />
           </n-form-item>
-          <div style="display: flex; justify-content: flex-end">
-            <n-button style="margin-right: 8px" @click="showEditMultiple = false">
+          <div class="flex justify-end gap-4">
+            <n-button @click="showEditMultiple = false">
               Cancel
             </n-button>
             <n-button type="primary" @click="handleValidateButtonClick">
@@ -70,43 +66,49 @@
 </template>
 
 <script setup>
-import { ref, defineProps } from "vue";
-import { NButton, NModal, NCard, NForm, NFormItem, NSelect, NDatePicker, NInput, useMessage } from 'naive-ui';
+import { ref, onMounted } from "vue";
+import { 
+  NButton, 
+  NModal, 
+  NCard, 
+  NForm, 
+  NFormItem, 
+  NSelect, 
+  NDatePicker, 
+  NInput, 
+  useMessage 
+} from 'naive-ui';
 import { Icon } from '@iconify/vue';
+import useUserStore from '@/store/user';
 
-const emit = defineEmits(['handle-edit-multiple']);
-const props = defineProps({
-  disabled: Boolean,
-})
+const store = useUserStore();
 const message = useMessage();
 const showEditMultiple = ref(false);
 const formRef = ref(null);
-
-const model = ref({});
-
-const setEmptyModel = () => {
-  model.value = {
-    descriptionValue: null,
-    typeValue: null,
-    categoryValue: null,
-    dateValue: null,
-    accountValue: null
-  };
+const model = ref(null);
+const props = defineProps({
+  disabled: Boolean,
+})
+const emptyData = {
+  description: null,
+  type: null,
+  category: null,
+  date: null,
+  account: null
 };
+const emit = defineEmits(['handle-edit-multiple']);
 
-setEmptyModel();
 
 const openMultipleModal = () => {
-  setEmptyModel();
+  model.value = {...emptyData}
   showEditMultiple.value = true;
 };
 
 const getTypeOptions = (options) => {
   return options.map((v) => {
-    const capitalized = v.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     return {
-      label: capitalized,
-      value: v
+      label: v,
+      value: v.toLowerCase(),
     };
   });
 };
@@ -131,15 +133,7 @@ const getAccountOptions = (options) => {
   });
 };
 
-const setCategoryOptions = (options) => {
-  categoryOptions.value = getCatergoryOptions(options);
-};
-
-const setAccountOptions = (options) => {
-  accountOptions.value = getAccountOptions(options);
-};
-
-const typeOptions = getTypeOptions(["income", "expense", "adjustment", "transfer"]);
+const typeOptions = getTypeOptions(["Income", "Expense", "Adjustment", "Transfer"]);
 const accountOptions = ref([]);
 const categoryOptions = ref([]);
 
@@ -152,11 +146,11 @@ const getRuleObject = (message) => {
 };
 
 const rules = {
-  descriptionValue: getRuleObject("Please input description"),
-  typeValue: getRuleObject("Please select type"),
-  accountValue: getRuleObject("Please select account"),
-  categoryValue: getRuleObject("Please select category"),
-  dateValue: {
+  description: getRuleObject("Please input description"),
+  type: getRuleObject("Please select type"),
+  account: getRuleObject("Please select account"),
+  category: getRuleObject("Please select category"),
+  date: {
     ...getRuleObject("Please input date"),
     type: "number",
   },
@@ -167,11 +161,11 @@ const handleValidateButtonClick = (e) => {
   formRef.value?.validate((errors) => {
     if (!errors) {
       emit('handle-edit-multiple', {
-        date: model.value.dateValue ? new Date(model.value.dateValue) : null,
-        description: model.value.descriptionValue,
-        category: model.value.categoryValue, 
-        type: model.value.typeValue,
-        account: model.value.accountValue,
+        date: model.value.date ? new Date(model.value.date) : null,
+        description: model.value.description,
+        category: model.value.category, 
+        type: model.value.type,
+        account: model.value.account,
       });
       setEmptyModel();
     } 
@@ -184,5 +178,8 @@ const handleValidateButtonClick = (e) => {
   showEditMultiple.value = false;
 };
 
-defineExpose({ setCategoryOptions, setAccountOptions });
+onMounted(() => {
+  categoryOptions.value = getCatergoryOptions(store.sortedCategories);
+  accountOptions.value = getAccountOptions(store.accounts);
+});
 </script>

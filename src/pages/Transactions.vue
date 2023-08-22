@@ -13,7 +13,7 @@
     </p>
     <div class="flex gap-4">
       <n-button :disabled="!multipleChecked" @click="handleDeleteMultiple">
-        <Icon icon="material-symbols:delete" class="pr-2"/>
+        <Icon icon="mdi:delete" class="pr-2"/>
         Delete Multiple
       </n-button>
       <edit-multiple-transactions 
@@ -21,12 +21,9 @@
         :disabled="!multipleChecked" 
         @handle-edit-multiple="handleEditMultiple"
       />
-      <n-button type="primary" @click="openTransactionModal('Add Transaction')">
-        <Icon icon="material-symbols:add" class="pr-2"/>
+      <n-button type="primary" @click="openTransactionModal()">
+        <Icon icon="mdi:add" class="pr-2"/>
         Add Transaction
-      </n-button>
-      <n-button @click="exportToCSV" role="button" aria-label="Export to CSV" type="primary" ghost>
-        <Icon icon="carbon:download" aria-hidden="true"/>
       </n-button>
     </div>
   </div>
@@ -57,16 +54,19 @@ import {
   NDataTable
 } from "naive-ui";
 import { useAuth0 } from '@auth0/auth0-vue';
+import { formatCurrency } from "@/utils";
 import axios from 'axios';
+
+import useUserStore from '@/store/user';
+
+const store = useUserStore();
 
 const baseURL = import.meta.env.VITE_BASE_URL;
 const { user } = useAuth0();
 
-const sortedCategories = reactive([]);
 const categoryOptions = reactive([]);
 const accountOptions = reactive([]);
 const typeOptions = reactive([]);
-const accounts = reactive([]);
 const userId = user._rawValue.sub;
 
 import TransactionModal from "@/components/TransactionModal.vue";
@@ -81,80 +81,6 @@ const multipleModal = ref(null);
 const multipleChecked = ref(false);
 const data = reactive([]);
 
-
-const populateData = async () => {
-  const userSubcategories = await getUserSubcategories();
-  axios.get(`${baseURL}/categories?user=all`)
-    .then((response) => {
-      const categories = response.data;
-      const parentCategories = categories.filter((category) => category.parent === 'root');
-      const subcategories = categories.filter((category) => category.parent !== 'root')
-        .sort((a, b) => a.parent.localeCompare(b.parent));;
-
-      parentCategories.forEach((category) => {
-        sortedCategories.push(category);
-        subcategories.forEach(subcategory => {
-          if (subcategory.parent === category.alias) {
-            sortedCategories.push(subcategory);
-          }
-        });
-        userSubcategories.forEach(subcategory => {
-          if (subcategory.parent === category.alias) {
-            sortedCategories.push(subcategory);
-          }
-        });
-      });
-    })
-    .then(() => {
-      modal.value.setCategoryOptions(sortedCategories);
-      multipleModal.value.setCategoryOptions(sortedCategories);
-    })
-    .then(() => {
-      getAllAccounts();
-    })
-    .catch((error) => {
-      message.error({
-        title: 'Error',
-        content: 'There was an error loading your categories. Please try again later.'
-      });
-      console.log(error);
-    });
-};
-
-const getUserSubcategories = async () => {
-  try {
-    const response = await axios.get(`${baseURL}/categories?user=${userId}`);
-    return response.data; 
-  } catch (error) {
-    message.error({
-      title: 'Error',
-      content: 'There was an error loading your categories. Please try again later.'
-    });
-    console.log(error);
-    return [];
-  }
-};
-
-const getAllAccounts = async () => {
-  axios.get(`${baseURL}/accounts?user=${userId}`)
-    .then((response) => {
-      accounts.push(...response.data);
-    })
-    .then(() => {
-      modal.value.setAccountOptions(accounts);
-      multipleModal.value.setAccountOptions(accounts);
-    })
-    .then(() => {
-      getAllTransactions();
-    })
-    .catch((error) => {
-      message.error({
-        title: 'Error',
-        content: 'There was an error loading your accounts. Please try again later.'
-      });
-      console.log(error);
-    });
-};
 
 const getAllTransactions = async () => {
   axios.get(`${baseURL}/transactions?user=${userId}`)
@@ -176,25 +102,25 @@ const getAllTransactions = async () => {
 };
 
 onMounted(()=> {
-  populateData();
+  getAllTransactions();
 });
 
 
-const openTransactionModal = (currentTitle, transaction) => {
-  modal.value.openModal(currentTitle, transaction);
+const openTransactionModal = (transaction) => {
+  modal.value.openModal(transaction);
 };
 
 const getCategoryFilterOptions = () => {
   const uniqueAliases = [...new Set(data.map((row) => row.category))];
   categoryOptions.push(...uniqueAliases.map((alias) => {
-    return {label: sortedCategories.find((category) => category.alias === alias).name, value: alias};
+    return {label: store.sortedCategories.find((category) => category.alias === alias).name, value: alias};
   }));
 };
 
 const getAccountFilterOptions = () => {
   const uniqueAccounts = [...new Set(data.map((row) => row.account))];
   accountOptions.push(...uniqueAccounts.map((account) => {
-    return {label: accounts.find((acc) => acc._id === account).name, value: account};
+    return {label: store.accounts.find((acc) => acc._id === account).name, value: account};
   }));
 };
 
@@ -214,7 +140,7 @@ const columns = [
   {
     title: "Date", 
     key: "date", 
-    width: 125,
+    width: 100,
     sorter: (row1, row2) => row1.date - row2.date,
     render(row) {
       return new Date(row.date).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -232,17 +158,18 @@ const columns = [
   { 
     title: "Amount",
     key: "amount", 
-    width: 125,
+    width: 150,
+    align: "center",
     sorter: (row1, row2) => row1.amount - row2.amount, 
     render: (row) => {
-      const amount = row.amount;
-      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+      const className = row.amount < 0 ? 'text-red-500' : '';
+      return h("span", { class: className }, formatCurrency(row.amount));
     }
   },
   {
     title: "Type",
     key: "type",
-    width: 200,
+    width: 125,
     render(row) {
       return h(
         NTag, 
@@ -258,10 +185,10 @@ const columns = [
   },
   { 
     title: "Category", 
-    key: "175", 
-    width: 200,
+    key: "category", 
+    width: 150,
     render(row) {
-      return sortedCategories.find((category) => category.alias === row.category).name;
+      return store.sortedCategories.find((category) => category.alias === row.category).name;
     },
     filterOptions: categoryOptions,
     filter: (value, row) => {
@@ -277,7 +204,7 @@ const columns = [
       return row.account === value
     }, 
     render(row) {
-      return accounts.find((account) => account._id === row.account).name;
+      return store.accounts.find((account) => account._id === row.account).name;
     },
   },
   {
@@ -288,15 +215,15 @@ const columns = [
     render(row) {
       const renderIcon = icon => () => h(Icon, { icon });
       const handleDropdownSelection = (selectedKey) => {
-        selectedKey === 'edit' ? openTransactionModal("Edit Transaction", row) : handleDelete(row);
+        selectedKey === 'edit' ? openTransactionModal(row) : handleDelete(row);
       };
 
       return h(
         NDropdown,
         {
           options: [
-            { label: 'Edit', key: 'edit', icon: renderIcon('material-symbols:edit') },
-            { label: 'Delete', key: 'delete', icon: renderIcon('material-symbols:delete') },
+            { label: 'Edit', key: 'edit', icon: renderIcon('mdi:edit') },
+            { label: 'Delete', key: 'delete', icon: renderIcon('mdi:delete') },
           ],
           placement: 'left-start',
           onSelect: handleDropdownSelection,
@@ -306,7 +233,7 @@ const columns = [
             h(
               NButton,
               { text: true },
-              { default: renderIcon('material-symbols:settings')}
+              { default: renderIcon('mdi:dots-vertical')}
             )
           ]
         }
@@ -342,8 +269,8 @@ const exportToCSV = () => {
   let csvContent = "Date,Description,Amount,Category,Type,Account\n";
 
   data.forEach(row => {
-    const account = accounts.find((acc) => acc._id === row.account).name;
-    const category = sortedCategories.find((category) => category.alias === row.category).name;
+    const account = store.accounts.find((acc) => acc._id === row.account).name;
+    const category = store.sortedCategories.find((category) => category.alias === row.category).name;
     const date = new Date(row.date).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' });
     csvContent += `${date},"${row.description}",${row.amount},${category},${row.type},${account}\n`;
   });

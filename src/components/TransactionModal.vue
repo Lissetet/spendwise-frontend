@@ -1,12 +1,12 @@
 <template>
   <n-modal v-model:show="showTransactionModal">
     <n-card
-      style="width: 600px"
       :title="title"
       :bordered="false"
       size="large"
       role="dialog"
       aria-modal="true"
+      class=" w-11/12 max-w-xl"
     >
       <template #header-extra>
         <n-button text @click="showTransactionModal = false">
@@ -18,47 +18,45 @@
           :model="model"
           :rules="rules"
           label-placement="left"
-          require-mark-placement="right-hanging"
           size="medium"
           label-width="auto"
-          :style="{
-            maxWidth: '640px'
-          }"
         >
-          <n-form-item label="Date" path="dateValue">
-            <n-date-picker v-model:value="model.dateValue" type="date" />
+          <n-form-item label="Date" path="date">
+            <n-date-picker v-model:value="model.date" type="date" />
           </n-form-item>
-          <n-form-item label="Amount" path="amountValue" placeholder="Amount">
-            <n-input-number v-model:value="model.amountValue" />
+          <n-form-item label="Amount" path="amount" placeholder="Amount">
+            <n-input-number v-model:value="model.amount" :precision="2" clearable>
+              <template #prefix>$</template>
+            </n-input-number>
           </n-form-item>
-          <n-form-item label="Description" path="descriptionValue">
-            <n-input v-model:value="model.descriptionValue" placeholder="Description" />
+          <n-form-item label="Description" path="description">
+            <n-input v-model:value="model.description" placeholder="Description" />
           </n-form-item>
-          <n-form-item label="Account" path="accountValue">
+          <n-form-item label="Account" path="account">
             <n-select
-              v-model:value="model.accountValue"
+              v-model:value="model.account"
               placeholder="Select Acccount"
               :options="accountOptions"
               filterable
             />
           </n-form-item>
-          <n-form-item label="Type" path="typeValue">
+          <n-form-item label="Type" path="type">
             <n-select
-              v-model:value="model.typeValue"
+              v-model:value="model.type"
               placeholder="Select Transaction Type"
               :options="typeOptions"
             />
           </n-form-item>
-          <n-form-item label="Category" path="categoryValue">
+          <n-form-item label="Category" path="category">
             <n-select
-              v-model:value="model.categoryValue"
+              v-model:value="model.category"
               placeholder="Select Category"
               :options="categoryOptions"
               filterable
             />
           </n-form-item>
-          <div style="display: flex; justify-content: flex-end">
-            <n-button style="margin-right: 8px" @click="showTransactionModal = false">
+          <div class="flex justify-end gap-4">
+            <n-button @click="showTransactionModal = false">
               Cancel
             </n-button>
             <n-button type="primary" @click="handleValidateButtonClick">
@@ -71,56 +69,69 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
-import { NButton, NModal, NCard, NForm, NFormItem, NSelect, NDatePicker, NInput, NInputNumber, useMessage } from 'naive-ui';
+import { ref, onMounted } from "vue";
+import { 
+  NButton, 
+  NModal, 
+  NCard, 
+  NForm, 
+  NFormItem, 
+  NSelect, 
+  NDatePicker, 
+  NInput, 
+  NInputNumber, 
+  useMessage 
+} from 'naive-ui';
 import { Icon } from '@iconify/vue';
+import useUserStore from '@/store/user';
 
-const emit = defineEmits(['handle-save']);
+const store = useUserStore();
 const message = useMessage();
 const showTransactionModal = ref(false);
 const title = ref(null);
-const editing = ref(false);
+const editing = ref(null);
 const formRef = ref(null);
 const emptyData = {
   key: null,
-  descriptionValue: null,
-  typeValue: null,
-  categoryValue: null,
-  dateValue: null,
-  amountValue: null,
-  accountValue: null
+  description: null,
+  type: null,
+  category: null,
+  date: null,
+  amount: null,
+  account: null
 };
-const model = ref({...emptyData});
+const model = ref(null);
+const emit = defineEmits(['handle-save']);
 
-const openModal = (modalTitle, transaction) => {
-  title.value = modalTitle;
+const openModal = (transaction) => {
   editing.value = !!transaction;
   if (transaction) {
+    title.value = 'Edit Transaction';
     model.value = {
       _id: transaction._id,
-      descriptionValue: transaction.description,
-      typeValue: transaction.type,
-      categoryValue: transaction.category,
-      dateValue: new Date(transaction.date).getTime(),
-      amountValue: transaction.amount,
-      accountValue: transaction.account
+      description: transaction.description,
+      type: transaction.type,
+      category: transaction.category,
+      date: new Date(transaction.date).getTime(),
+      amount: transaction.amount,
+      account: transaction.account
     };
   } else {
+    title.value = 'Add Transaction';
     model.value = {...emptyData};
   }
   showTransactionModal.value = true;
 };
+
 const closeModal = () => {
   showTransactionModal.value = false;
 }
 
-
 const getTypeOptions = (options) => {
   return options.map((v) => {
-    const capitalized = v.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     return {
-      label: capitalized,
-      value: v
+      label: v,
+      value: v.toLowerCase()
     };
   });
 };
@@ -145,36 +156,24 @@ const getAccountOptions = (options) => {
   });
 };
 
-const setCategoryOptions = (options) => {
-  categoryOptions.value = getCatergoryOptions(options);
-};
-
-const setAccountOptions = (options) => {
-  accountOptions.value = getAccountOptions(options);
-};
-
-const typeOptions = getTypeOptions(["income", "expense", "adjustment", "transfer"]);
+const typeOptions = getTypeOptions(["Income", "Expense", "Adjustment", "Transfer"]);
 const accountOptions = ref([]);
 const categoryOptions = ref([]);
 
-const getRuleObject = (message, required=true) => {
-  return {
-    required,
-    trigger: ["blur", "input"],
-    message
-  };
+const getRuleObject = (message, required=true, trigger=['blur', 'input']) => {
+  return { required, trigger, message };
 };
 
 const rules = {
-  descriptionValue: getRuleObject("Please input description"),
-  typeValue: getRuleObject("Please select type", false),
-  accountValue: getRuleObject("Please select account"),
-  categoryValue: getRuleObject("Please select category", false),
-  dateValue: {
+  description: getRuleObject("Please input description"),
+  type: getRuleObject("Please select type", false),
+  account: getRuleObject("Please select account"),
+  category: getRuleObject("Please select category", false),
+  date: {
     ...getRuleObject("Please input date"),
     type: "number",
   },
-  amountValue: {
+  amount: {
     ...getRuleObject("Please input valid amount"),
     type: "number",
   },
@@ -184,14 +183,14 @@ const handleValidateButtonClick = (e) => {
   e.preventDefault();
   formRef.value?.validate((errors) => {
     const transaction = {
-      date: new Date(model.value.dateValue),
-      description: model.value.descriptionValue,
-      account: model.value.accountValue,
-      amount: model.value.amountValue,
+      date: new Date(model.value.date),
+      description: model.value.description,
+      account: model.value.account,
+      amount: model.value.amount,
     };  
-    model.value.typeValue === 'expense' && (transaction.amount = -model.value.amountValue);
-    model.value.typeValue && (transaction.type = model.value.typeValue);
-    model.value.categoryValue && (transaction.category = model.value.categoryValue);
+    model.value.type === 'expense' && (transaction.amount = -model.value.amount);
+    model.value.type && (transaction.type = model.value.type);
+    model.value.category && (transaction.category = model.value.category);
     model.value._id && (transaction._id = model.value._id);
 
     if (!errors) {
@@ -205,6 +204,10 @@ const handleValidateButtonClick = (e) => {
   closeModal();
 };
 
-defineExpose({ openModal, closeModal, setCategoryOptions, setAccountOptions });
+onMounted(() => {
+  categoryOptions.value = getCatergoryOptions(store.sortedCategories);
+  accountOptions.value = getAccountOptions(store.accounts);
+});
 
+defineExpose({ openModal, closeModal });
 </script>

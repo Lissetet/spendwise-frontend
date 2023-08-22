@@ -32,17 +32,10 @@ const openAccountModal = () => {
   modal.value.openModal();
 };
 
-onMounted(store.fetchAccounts);
-
-const handleSave = async (newAccount, editing) => {
-  if (editing) {
-    store.editAccount(newAccount);
-    message.success(
-      `${newAccount.name} account edited successfully!`,
-    )
-  } else {
-    store.addAccount(newAccount);
-    message.success(`${newAccount.name} account added successfully!`)
-  }
+const handleSave = async (newAccount) => {
+  store.addAccount(newAccount);
+  message.success(`${newAccount.name} added successfully!`)
 }
+
+onMounted(store.fetchAccounts);
 </script>
