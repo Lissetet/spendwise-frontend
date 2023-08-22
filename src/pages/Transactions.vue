@@ -54,36 +54,14 @@ import {
   NDataTable
 } from "naive-ui";
 import { formatCurrency } from "@/utils";
-import axios from 'axios';
-
 import useUserStore from '@/store/user';
-
-const store = useUserStore();
-
-const baseURL = import.meta.env.VITE_BASE_URL;
-
-const categoryOptions = reactive([]);
-const accountOptions = reactive([]);
-const typeOptions = reactive([]);
-
 import TransactionModal from "@/components/TransactionModal.vue";
 
+const store = useUserStore();
 const message = useMessage();
 const dialog = useDialog();
 const modal = ref(null);
-
 const multipleChecked = ref(false);
-const data = ref([])
-
-
-onMounted(()=> {
-  store.fetchTransactions();
-  data.value = store.transactions;
-  getCategoryFilterOptions();
-  getAccountFilterOptions();
-  getTypeFilterOptions();
-});
-
 
 const openTransactionModal = (transaction) => {
   modal.value.openModal(transaction);
@@ -92,34 +70,6 @@ const openTransactionModal = (transaction) => {
 const openMultipleModal = () => {
   modal.value.openModalMultiple();
 };
-
-const getOptionForAlias = (alias) => {
-  const category = store.sortedCategories.find((category) => category.alias === alias);
-  return { label: category.name, value: alias };
-}
-
-const getCategoryFilterOptions = () => {
-  categoryOptions.push(...store.uniqueTransactionAliases.map(getOptionForAlias));
-};
-
-const getOptionForAccount = (accountId) => {
-  const account = store.accounts.find(acc => acc._id === accountId);
-  return { label: account.name, value: accountId };
-}
-
-const getAccountFilterOptions = () => {
-  accountOptions.push(...store.uniqueTransactionAccounts.map(getOptionForAccount));
-};
-
-const getOptionForType = (type) => {
-  const capitalizedType = (type) => type.charAt(0).toUpperCase() + type.slice(1);
-  return { label: capitalizedType(type), value: type };
-}
-
-const getTypeFilterOptions = () => {
-  typeOptions.push(...store.uniqueTransactionTypes.map(getOptionForType));
-};
-
 
 const columns = [
   { 
@@ -166,7 +116,7 @@ const columns = [
         { default: () => row.type }
       )
     },
-    filterOptions: typeOptions,
+    filterOptions: store.transactionFilters.type,
     filter: (value, row) => {
       return row.type === value
     }
@@ -178,7 +128,7 @@ const columns = [
     render(row) {
       return store.sortedCategories.find((category) => category.alias === row.category).name;
     },
-    filterOptions: categoryOptions,
+    filterOptions: store.transactionFilters.category,
     filter: (value, row) => {
       return row.category === value
     }
@@ -187,7 +137,7 @@ const columns = [
     title: "Account", 
     key: "account", 
     width: 150,
-    filterOptions: accountOptions,
+    filterOptions: store.transactionFilters.account,
     filter: (value, row) => {
       return row.account === value
     }, 
@@ -274,50 +224,6 @@ const exportToCSV = () => {
   document.body.removeChild(link);
 };
 
-const addTransaction = (newTransaction) => {
-  store.addTransaction(newTransaction);
-  message.success(`${newTransaction.description} added successfully!`);
-};
-
-const editTransaction = (editedTransaction) => {
-  const requetBody = {}
-  const transactionIndex = data.findIndex((row) => row._id === editedTransaction._id);
-
-  Object.keys(editedTransaction).forEach((transactionKey) => {
-    if (editedTransaction[transactionKey] !== data[transactionIndex][transactionKey]) {
-      requetBody[transactionKey] = editedTransaction[transactionKey];
-    }
-  });
-
-  axios.patch(`${baseURL}/transactions/${editedTransaction._id}`, requetBody)
-    .then(() => {
-      data[transactionIndex] = {...editedTransaction};
-      message.success(
-        `${editedTransaction.description} updated successfully!`,
-        { duration: 5e3 }
-      );
-    })
-    .catch((error) => {
-      message.error({
-        title: 'Error',
-        content: 'There was an error updating your transaction. Please try again later.'
-      });
-      console.log(error);
-    })
-};
-
-const deleteTransaction = (_id, description=false) => {
-  axios.delete(`${baseURL}/transactions/${_id}`)
-    .then(() => {
-      const transactionIndex = data.findIndex((row) => row._id === _id);
-      data.splice(transactionIndex, 1);
-      description && message.success(
-        `${description} deleted successfully!`,
-        { duration: 5e3 }
-      );
-    })
-
-};
 
 const handleDelete = (transaction) => {
   dialog.error({
@@ -330,7 +236,10 @@ const handleDelete = (transaction) => {
     },
     positiveText: 'Delete',
     negativeText: 'Cancel',
-    onPositiveClick: () => { deleteTransaction(transaction._id, transaction.description) }
+    onPositiveClick: () => { 
+      store.deleteTransaction(transaction._id);
+      message.success(`${transaction.description} deleted successfully!`)
+     }
   })
 };
 
@@ -347,7 +256,7 @@ const handleDeleteMultiple = () => {
     negativeText: 'Cancel',
     onPositiveClick: () => { 
       checkedRowKeys.value.forEach((key) => {
-        deleteTransaction(key);
+        store.deleteTransaction(key);
       })
       message.success(
         `${checkedRowKeys.value.length} transactions deleted successfully!`,
@@ -358,12 +267,14 @@ const handleDeleteMultiple = () => {
   })
 };
 
-const handleSave = async (newTransaction, editing) => { 
+const handleSave = async (transaction, editing) => { 
   if (editing) {
-    editTransaction(newTransaction);
-  } else (
-    addTransaction(newTransaction)
-  )
+    store.editTransaction(transaction);
+    message.success(`${transaction.description} updated successfully!`);
+  } else {
+    store.addTransaction(transaction);
+    message.success(`${transaction.description} added successfully!`);
+  }
 };
 
 const handleEditMultiple = (obj) => {
@@ -379,20 +290,8 @@ const handleEditMultiple = (obj) => {
         requestBody[transactionKey] = obj[transactionKey];
       }
     });
-
     checkedRowKeys.value.forEach((_id) => {
-      axios.patch(`${baseURL}/transactions/${_id}`, requestBody)
-        .then(() => {
-          const transactionIndex = data.findIndex((row) => row._id === _id);
-          data[transactionIndex] = {...data[transactionIndex], ...requestBody};
-        })
-        .catch((error) => {
-          message.error({
-            title: 'Error',
-            content: 'There was an error updating your transaction. Please try again later.'
-          });
-          console.log(error);
-        })
+      store.editTransaction({...requestBody, _id});
     })
     message.success(
       `${checkedRowKeys.value.length} transactions updated successfully!`,
@@ -401,4 +300,8 @@ const handleEditMultiple = (obj) => {
     checkedRowKeys.value.splice(0, checkedRowKeys.value.length);
   }
 }
+
+onMounted(()=> {
+  store.fetchTransactions();
+});
 </script>

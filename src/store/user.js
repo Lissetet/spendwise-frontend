@@ -27,6 +27,11 @@ export default defineStore("user", {
       uniqueTransactionAliases: [],
       uniqueTransactionAccounts: [],
       uniqueTransactionTypes: [],
+      transactionFilters: {
+        category: [],
+        account: [],
+        type: [],
+      },
       events: [],
   }},
   persist: true,
@@ -136,22 +141,22 @@ export default defineStore("user", {
       const isCash = (account) => types.cash.includes(account.type);
       this.accountTypes.allCash.children = this.accounts.filter(({type}) => isCash({type}));
     },
-    async addAccount(accountData) {
+    async addAccount(data) {
       const accountBody = {
         user: this.user.sub,
-        name: accountData.name,
-        type: accountData.type,
+        name: data.name,
+        type: data.type,
       }
 
       try {
         const accountResponse = await axios.post(`${baseURL}/accounts`, accountBody)
         let newAccount = {...accountResponse.data, balance: 0};
   
-        if (accountData.balance !== 0) {
+        if (data.balance !== 0) {
           const transactionBody = {
             user: this.user.sub,
             account: newAccount._id,
-            amount: accountData.balance,
+            amount: data.balance,
             description: 'Opening Balance',
           }
           const res = await axios.post(`${baseURL}/transactions`, transactionBody)
@@ -167,15 +172,15 @@ export default defineStore("user", {
         console.log(error)
       }
     },
-    async editAccount(accountData) {
+    async editAccount(data) {
       const accountBody = {
-        name: accountData.name,
-        type: accountData.type,
+        name: data.name,
+        type: data.type,
       }
 
       try {
-        const accountResponse = await axios.patch(`${baseURL}/accounts/${accountData._id}`, accountBody)
-        const index = this.accounts.findIndex(account => account._id === accountData._id)
+        const accountResponse = await axios.patch(`${baseURL}/accounts/${data._id}`, accountBody)
+        const index = this.accounts.findIndex(account => account._id === data._id)
         this.accounts[index] = accountResponse.data;
         this.setAccountNestedData();
       } catch (error) {
@@ -183,10 +188,10 @@ export default defineStore("user", {
         console.log(error)
       }
     },
-    async deleteAccount(accountId) {
+    async deleteAccount(id) {
       try {
-        await axios.delete(`${baseURL}/accounts/${accountId}`);
-        const index = this.accounts.findIndex(account => account._id === accountId)
+        await axios.delete(`${baseURL}/accounts/${id}`);
+        const index = this.accounts.findIndex(account => account._id === id)
         this.accounts.splice(index, 1)
         this.setAccountNestedData();
       } catch (error) {
@@ -203,18 +208,18 @@ export default defineStore("user", {
         console.log(error)
       }
     }, 
-    async addEvent(eventData) {
+    async addEvent(data) {
       try {
-        const eventResponse = await axios.post(`${baseURL}/events`, eventData)
+        const eventResponse = await axios.post(`${baseURL}/events`, data)
         this.events.push(eventResponse.data);
       } catch (error) {
         alert(error)
         console.log(error)
       }
     },
-    async editEvent(eventData, id) {
+    async editEvent(data, id) {
       try {
-        const eventResponse = await axios.patch(`${baseURL}/events/${id}`, eventData)
+        const eventResponse = await axios.patch(`${baseURL}/events/${id}`, data)
         const index = this.events.findIndex(event => event._id === id)
         this.events[index] = eventResponse.data;
       } catch (error) {
@@ -236,29 +241,91 @@ export default defineStore("user", {
       try {
         const res = await axios.get(`${baseURL}/transactions?user=${this.user.sub}`);
         this.transactions = res.data;
-        this.setUniqueTransactionValues();
+        this.createTransactionFilters();
       } catch (error) {
         alert(error)
         console.log(error)
       }
     },
-    async addTransaction(transactionData) {
-      transactionData.user = this.user.sub;
+    async addTransaction(data) {
+      data.user = this.user.sub;
       try {
-        const res = await axios.post(`${baseURL}/transactions`, transactionData)
+        const res = await axios.post(`${baseURL}/transactions`, data)
         this.transactions.push(res.data);
+        this.createTransactionFilters();
       } catch (error) {
         alert(error)
         console.log(error)
       }
     },
-    setUniqueTransactionValues() {
+    async editTransaction(data) {
+      const index = this.transactions.findIndex(v => v._id === data._id)
+      const uniqueKeysTracker = ['category', 'account', 'type']
+      const requestBody = {}
+
+      let resetFilters = false;
+
+      Object.keys(data).forEach(key => {
+        if (data[key] !== this.transactions[index][key]) {
+          requestBody[key] = data[key];
+          uniqueKeysTracker.includes(key) && (resetFilters = true);
+        }
+      })
+
+      try {
+        const res = await axios.patch(`${baseURL}/transactions/${data._id}`, requestBody)
+        this.transactions[index] = res.data;
+        resetFilters && this.createTransactionFilters();
+      } catch (error) {
+        alert(error)
+        console.log(error)
+      }
+    },
+    async deleteTransaction(id) {
+      try {
+        await axios.delete(`${baseURL}/transactions/${id}`);
+        const index = this.transactions.findIndex(v => v._id === id)
+        this.transactions.splice(index, 1)
+        this.createTransactionFilters();
+      } catch (error) {
+        alert(error)
+        console.log(error)
+      }
+    },
+    createTransactionFilters() {
+      const getOptionForAlias = (alias) => {
+        const category = this.sortedCategories.find((category) => category.alias === alias);
+        return { label: category.name, value: alias };
+      }
+      
+      const getOptionForAccount = (id) => {
+        const account = this.accounts.find(acc => acc._id === id);
+        return { label: account.name, value: id };
+      }
+      
+      const getOptionForType = (type) => {
+        const capitalizedType = (type) => type.charAt(0).toUpperCase() + type.slice(1);
+        return { label: capitalizedType(type), value: type };
+      }
+
       const getUniqueValues = (key) => {
         return [...new Set(this.transactions.map((v) => v[key]))];
       }
-      this.uniqueTransactionAliases = getUniqueValues('category');
-      this.uniqueTransactionAccounts = getUniqueValues('account');
-      this.uniqueTransactionTypes = getUniqueValues('type');
+
+      for (let filter in this.transactionFilters) {
+        const uniqueValues = getUniqueValues(filter);
+        const filterOptions = uniqueValues.map((value) => {
+          switch (filter) {
+            case 'category':
+              return getOptionForAlias(value);
+            case 'account':
+              return getOptionForAccount(value);
+            case 'type':
+              return getOptionForType(value);
+          }
+        })
+        this.transactionFilters[filter] = filterOptions;
+      }
     }
   },
 })
