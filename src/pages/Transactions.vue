@@ -43,7 +43,7 @@
 
 
 <script setup>
-import { h, reactive, ref, onMounted, watchEffect, watch } from "vue";
+import { h, reactive, ref, onMounted, watch } from "vue";
 import { Icon } from "@iconify/vue";
 import { 
   NTag, 
@@ -51,9 +51,10 @@ import {
   NDropdown, 
   useMessage, 
   useDialog, 
-  NDataTable
+  NDataTable,
+  NText
 } from "naive-ui";
-import { formatCurrency } from "@/utils";
+import { formatCurrency, formatDate } from "@/utils";
 import useUserStore from '@/store/user';
 import TransactionModal from "@/components/TransactionModal.vue";
 
@@ -62,9 +63,6 @@ const message = useMessage();
 const dialog = useDialog();
 const modal = ref(null);
 const multipleChecked = ref(false);
-const categoryFilter = ref(store.transactionFilters.category);
-const accountFilter = ref(store.transactionFilters.account);
-const typeFilter = ref(store.transactionFilters.type);
 
 const openTransactionModal = (transaction) => {
   modal.value.openModal(transaction);
@@ -73,6 +71,56 @@ const openTransactionModal = (transaction) => {
 const openMultipleModal = () => {
   modal.value.openModalMultiple();
 };
+
+const renderCategory = (row) => {
+  return store.sortedCategories.find((cat) => cat.alias === row.category).name;
+};
+
+const renderType = (row) => {
+  const typeMap = {
+    'income': 'success',
+    'expense': 'error'
+  };
+  const type = typeMap[row.type] || 'default';
+  return h(NTag, { type, class: 'capitalize' }, { default: () => row.type });
+};
+
+const renderAmount = (row) => {
+  const type = row.amount < 0 ? 'error' : 'default';
+  return h(NText, { type }, formatCurrency(row.amount));
+};
+
+const renderAccount = (row) => {
+  return store.accounts.find((acc) => acc._id === row.account).name;
+};
+
+const renderActions = (row) => {
+  const renderIcon = icon => () => h(Icon, { icon });
+  const handleDropdownSelection = (selectedKey) => {
+    selectedKey === 'edit' ? openTransactionModal(row) : handleDelete(row);
+  };
+
+  return h(
+    NDropdown,
+    {
+      options: [
+        { label: 'Edit', key: 'edit', icon: renderIcon('mdi:edit') },
+        { label: 'Delete', key: 'delete', icon: renderIcon('mdi:delete') },
+      ],
+      placement: 'left-start',
+      onSelect: handleDropdownSelection,
+    },
+    {
+      default: () => [
+        h(
+          NButton,
+          { text: true },
+          { default: renderIcon('mdi:dots-vertical')}
+        )
+      ]
+    }
+  )
+}
 
 const columns = reactive([
   { 
@@ -84,9 +132,7 @@ const columns = reactive([
     key: "date", 
     width: 100,
     sorter: (row1, row2) => row1.date - row2.date,
-    render(row) {
-      return new Date(row.date).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' });
-    }
+    render: (row) => formatDate(row.date),
   },
   { 
     title: "Description", 
@@ -102,24 +148,15 @@ const columns = reactive([
     width: 150,
     align: "center",
     sorter: (row1, row2) => row1.amount - row2.amount, 
-    render: (row) => {
-      const className = row.amount < 0 ? 'text-red-500' : '';
-      return h("span", { class: className }, formatCurrency(row.amount));
-    }
+    render: renderAmount,
   },
   {
     title: "Type",
     key: "type",
     width: 125,
-    render(row) {
-      return h(
-        NTag, 
-        { type: row.type === 'income' ? 'success' : row.type === 'expense' ? 'error' : 'default',
-        class: 'capitalize' }, 
-        { default: () => row.type }
-      )
-    },
-    filterOptions: typeFilter.value,
+    align: "center",
+    render: renderType,
+    filterOptions: store.transactionFilters.type,
     filter: (value, row) => {
       return row.type === value
     }
@@ -128,10 +165,9 @@ const columns = reactive([
     title: "Category", 
     key: "category", 
     width: 150,
-    render(row) {
-      return store.sortedCategories.find((category) => category.alias === row.category).name;
-    },
-    filterOptions: categoryFilter.value,
+    align: "center",
+    render: renderCategory,
+    filterOptions: store.transactionFilters.category,
     filter: (value, row) => {
       return row.category === value
     }
@@ -140,46 +176,19 @@ const columns = reactive([
     title: "Account", 
     key: "account", 
     width: 150,
-    filterOptions: accountFilter.value,
+    align: "center",
+    filterOptions: store.transactionFilters.account,
     filter: (value, row) => {
       return row.account === value
     }, 
-    render(row) {
-      return store.accounts.find((account) => account._id === row.account)?.name;
-    },
+    render: renderAccount,
   },
   {
     title: "",
-    key: "options",
+    key: "actions",
     align: "center",
     width: 50,
-    render(row) {
-      const renderIcon = icon => () => h(Icon, { icon });
-      const handleDropdownSelection = (selectedKey) => {
-        selectedKey === 'edit' ? openTransactionModal(row) : handleDelete(row);
-      };
-
-      return h(
-        NDropdown,
-        {
-          options: [
-            { label: 'Edit', key: 'edit', icon: renderIcon('mdi:edit') },
-            { label: 'Delete', key: 'delete', icon: renderIcon('mdi:delete') },
-          ],
-          placement: 'left-start',
-          onSelect: handleDropdownSelection,
-        },
-        {
-          default: () => [
-            h(
-              NButton,
-              { text: true },
-              { default: renderIcon('mdi:dots-vertical')}
-            )
-          ]
-        }
-      )
-    }
+    render: renderActions,
   },
 ]);
 
@@ -189,7 +198,9 @@ const pagination = reactive({
   showSizePicker: true,
   pageSizes: [10, 25, 50, 100],
   prefix ({ itemCount }) {
-    return `${(pagination.page - 1) * pagination.pageSize + 1}-${Math.min(pagination.page * pagination.pageSize, itemCount)} out of ${itemCount}`
+    const { page, pageSize } = pagination;
+    const ending = Math.min(page * pageSize, itemCount);
+    return `${(page - 1) * pageSize + 1}-${ending} out of ${itemCount}`
   },
   onChange: (page) => {
     pagination.page = page;
@@ -208,25 +219,24 @@ const handleCheck = (rowKeys) => {
 
 const exportToCSV = () => {
   let csvContent = "Date,Description,Amount,Category,Type,Account\n";
-
   store.transactions.forEach(row => {
-    const account = store.accounts.find((acc) => acc._id === row.account).name;
-    const category = store.sortedCategories.find((category) => category.alias === row.category).name;
-    const date = new Date(row.date).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric' });
-    csvContent += `${date},"${row.description}",${row.amount},${category},${row.type},${account}\n`;
+    csvContent += 
+      `${formatDate(row.date)},` +
+      `${row.description},` +
+      `${row.amount},` +
+      `${renderCategory(row)},` +
+      `${row.type},` +
+      `${renderAccount(row)}\n`;
   });
-
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
-  const url = URL.createObjectURL(blob);
-  link.setAttribute("href", url);
+  link.setAttribute("href", URL.createObjectURL(blob));
   link.setAttribute("download", "transactions.csv");
   link.style.visibility = "hidden";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 };
-
 
 const handleDelete = (transaction) => {
   dialog.error({
@@ -306,8 +316,9 @@ const handleEditMultiple = (obj) => {
 
 watch(() => store.transactions, () => {
   store.createTransactionFilters();
-  categoryFilter.value = store.transactionFilters.category;
-  columns[5].filterOptions = categoryFilter.value;
+  columns[4].filterOptions = store.transactionFilters.type;
+  columns[5].filterOptions = store.transactionFilters.category;
+  columns[6].filterOptions = store.transactionFilters.account;
 }, { deep: true });
 
 

@@ -241,7 +241,6 @@ export default defineStore("user", {
       try {
         const res = await axios.get(`${baseURL}/transactions?user=${this.user.sub}`);
         this.transactions = res.data;
-        this.createTransactionFilters();
       } catch (error) {
         alert(error)
         console.log(error)
