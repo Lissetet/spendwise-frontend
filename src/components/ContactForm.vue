@@ -4,29 +4,25 @@
   :model="model"
   :rules="rules"
   label-placement="left"
-  require-mark-placement="right-hanging"
-  :size="size"
+  size="medium"
   label-width="auto"
-  :style="{
-    maxWidth: '640px'
-  }"
+  class="max-w-xl"
   >
-    <n-form-item label="Type of Message" path="messageTypeValue">
-      <n-radio-group v-model:value="model.messageTypeValue" name="radiogroup">
+    <n-form-item label="Type of Message" path="messageType">
+      <n-radio-group v-model:value="model.messageType" name="radiogroup">
         <template v-for="button in Object.keys(radioButtons)">
           <n-radio-button :value="button">
             {{ radioButtons[button] }}
           </n-radio-button>
-
         </template>
       </n-radio-group>
     </n-form-item>
-    <n-form-item label="Subject" path="subjectValue">
-      <n-input v-model:value="model.subjectValue" placeholder="Subject" />
+    <n-form-item label="Subject" path="subject">
+      <n-input v-model:value="model.subject" placeholder="Subject" />
     </n-form-item>
-    <n-form-item label="Message" path="messageValue">
+    <n-form-item label="Message" path="message">
       <n-input
-        v-model:value="model.messageValue"
+        v-model:value="model.message"
         placeholder="Message"
         type="textarea"
         :autosize="{
@@ -52,25 +48,30 @@
 </template>
 
 <script setup>
-import { useAuth0 } from '@auth0/auth0-vue';
-const { user } = useAuth0();
-const userId = user._rawValue.sub;
-import axios from "axios";
-const baseURL = import.meta.env.VITE_BASE_URL;
-const props = defineProps(['radioButtons'])
-
-import { NForm, NFormItem, NButton, NRadioGroup, NRadioButton, NInput, NAlert } from 'naive-ui'
 import { ref } from 'vue';
-import { useMessage } from 'naive-ui';
+import axios from "axios";
+import useUserStore from '@/store/user';
+import { 
+  NForm, 
+  NFormItem, 
+  NButton, 
+  NRadioGroup, 
+  NRadioButton, 
+  NInput, 
+  NAlert,
+  useMessage
+} from 'naive-ui'
 
+const store = useUserStore();
+const props = defineProps(['radioButtons'])
 const formRef = ref(null);
 const message = useMessage();
-const size = ref('medium');
+const baseURL = import.meta.env.VITE_BASE_URL;
 const showAlert = ref(false);
 const model = ref({
-  subjectValue: null,
-  messageValue: null,
-  messageTypeValue: null,
+  subject: null,
+  message: null,
+  messageType: null,
 });
 
 const getRule = (required, ruleMessage) => {
@@ -82,15 +83,15 @@ const getRule = (required, ruleMessage) => {
 };
 
 const rules = {
-  subjectValue: getRule(false, 'Please enter a subject'),
-  messageValue: getRule(true, 'Please enter a message'),
-  messageTypeValue: getRule(true, 'Please select a message type'),
+  subject: getRule(false, 'Please enter a subject'),
+  message: getRule(true, 'Please enter a message'),
+  messageType: getRule(true, 'Please select a message type'),
 };
 
 const clearForm = () => {
-  model.value.subjectValue = null;
-  model.value.messageValue = null;
-  model.value.messageTypeValue = null;
+  model.value.subject = null;
+  model.value.message = null;
+  model.value.messageType = null;
 };
 
 const sendMessage = async (data) => {
@@ -116,10 +117,10 @@ const handleValidateButtonClick = (e) => {
   formRef.value?.validate((errors) => {
     if (!errors) {
       const data = {
-        subject: model.value.subjectValue,
-        message: model.value.messageValue,
-        type: model.value.messageTypeValue,
-        user: userId,
+        subject: model.value.subject,
+        message: model.value.message,
+        type: model.value.messageType,
+        user: store.user.sub,
       };
       sendMessage(data);
     } else {
@@ -127,11 +128,4 @@ const handleValidateButtonClick = (e) => {
     }
   });
 };
-
-const openEmailClient = () => {
-  const recipient = "liz@liztrejo.dev";
-  const subject = "SpendWise Contact Form";
-  const mailtoUrl = `mailto:${recipient}?subject=${encodeURIComponent(subject)}`;
-  window.location.href = mailtoUrl;
-}
 </script>

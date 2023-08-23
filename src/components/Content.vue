@@ -39,11 +39,18 @@
 </template>
 
 <script setup>
+import { ref, h, onMounted, onBeforeUnmount } from 'vue';
 import { useAuth0 } from '@auth0/auth0-vue';
 import { Icon } from '@iconify/vue';
 import { RouterLink } from 'vue-router';
-import { NLayout, NDivider, NLayoutSider, NSpace, NMenu, NButton, NText } from 'naive-ui';
-import { ref, h, onMounted, onBeforeUnmount } from 'vue';
+import { 
+  NLayout, 
+  NDivider, 
+  NLayoutSider,
+  NSpace, 
+  NMenu, 
+  NText 
+} from 'naive-ui';
 import FeedbackModal from '@/components/FeedbackModal.vue';
 import ContactModal from './ContactModal.vue';
 
@@ -53,9 +60,9 @@ const store = useUserStore();
 const { logout } = useAuth0();
 const collapsed = ref(false);
 
-const toggleCollapse = () => {
-  collapsed.value = !collapsed.value;
-};
+// const toggleCollapse = () => {
+//   collapsed.value = !collapsed.value;
+// };
 
 const checkWindowSize = () => {
   collapsed.value = window.innerWidth < 1024;
@@ -63,7 +70,7 @@ const checkWindowSize = () => {
 
 onMounted(() => {
   window.addEventListener('resize', checkWindowSize);
-  checkWindowSize();  // Call it once to initialize state based on current window size
+  checkWindowSize(); 
 });
 
 onBeforeUnmount(() => {

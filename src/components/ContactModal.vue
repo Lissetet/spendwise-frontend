@@ -19,9 +19,9 @@
       <h1 class="text-center">Contact</h1>
       <p class="text-center mb-6">
         Found a bug or need help? Please contact me below or email me at 
-        <n-button text type="primary"  @click="openEmailClient">
-          liz@liztrejo.dev
-        </n-button>.
+        <a href="mailto:liz@liztrejo.dev">
+          <n-text type="primary">liz@liztrejo.dev</n-text>
+        </a>.
       </p>
       <contact-form :radioButtons="radioButtons" />
     </n-card>
@@ -30,7 +30,7 @@
 
 <script setup>
 import { ref } from "vue";
-import { NButton, NModal, NCard } from 'naive-ui';
+import { NButton, NModal, NCard, NText } from 'naive-ui';
 import { Icon } from '@iconify/vue';
 import ContactForm from "./ContactForm.vue";
 

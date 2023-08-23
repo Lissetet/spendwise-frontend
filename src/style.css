@@ -26,3 +26,7 @@ nav a {
   @apply font-semibold no-underline p-1 border-transparent;
   @apply border-0 border-b-2 hover:border-primary border-solid;
 }
+
+a {
+  @apply no-underline;
+}
