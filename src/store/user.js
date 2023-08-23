@@ -252,7 +252,6 @@ export default defineStore("user", {
       try {
         const res = await axios.post(`${baseURL}/transactions`, data)
         this.transactions.push(res.data);
-        this.createTransactionFilters();
       } catch (error) {
         alert(error)
         console.log(error)
@@ -260,22 +259,17 @@ export default defineStore("user", {
     },
     async editTransaction(data) {
       const index = this.transactions.findIndex(v => v._id === data._id)
-      const uniqueKeysTracker = ['category', 'account', 'type']
       const requestBody = {}
-
-      let resetFilters = false;
 
       Object.keys(data).forEach(key => {
         if (data[key] !== this.transactions[index][key]) {
           requestBody[key] = data[key];
-          uniqueKeysTracker.includes(key) && (resetFilters = true);
         }
       })
 
       try {
         const res = await axios.patch(`${baseURL}/transactions/${data._id}`, requestBody)
         this.transactions[index] = res.data;
-        resetFilters && this.createTransactionFilters();
       } catch (error) {
         alert(error)
         console.log(error)
@@ -286,7 +280,6 @@ export default defineStore("user", {
         await axios.delete(`${baseURL}/transactions/${id}`);
         const index = this.transactions.findIndex(v => v._id === id)
         this.transactions.splice(index, 1)
-        this.createTransactionFilters();
       } catch (error) {
         alert(error)
         console.log(error)

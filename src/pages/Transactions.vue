@@ -43,7 +43,7 @@
 
 
 <script setup>
-import { h, reactive, ref, onMounted } from "vue";
+import { h, reactive, ref, onMounted, watchEffect, watch } from "vue";
 import { Icon } from "@iconify/vue";
 import { 
   NTag, 
@@ -62,6 +62,9 @@ const message = useMessage();
 const dialog = useDialog();
 const modal = ref(null);
 const multipleChecked = ref(false);
+const categoryFilter = ref(store.transactionFilters.category);
+const accountFilter = ref(store.transactionFilters.account);
+const typeFilter = ref(store.transactionFilters.type);
 
 const openTransactionModal = (transaction) => {
   modal.value.openModal(transaction);
@@ -71,7 +74,7 @@ const openMultipleModal = () => {
   modal.value.openModalMultiple();
 };
 
-const columns = [
+const columns = reactive([
   { 
     type: "selection", 
     options: ['all','none'],
@@ -116,7 +119,7 @@ const columns = [
         { default: () => row.type }
       )
     },
-    filterOptions: store.transactionFilters.type,
+    filterOptions: typeFilter.value,
     filter: (value, row) => {
       return row.type === value
     }
@@ -128,7 +131,7 @@ const columns = [
     render(row) {
       return store.sortedCategories.find((category) => category.alias === row.category).name;
     },
-    filterOptions: store.transactionFilters.category,
+    filterOptions: categoryFilter.value,
     filter: (value, row) => {
       return row.category === value
     }
@@ -137,7 +140,7 @@ const columns = [
     title: "Account", 
     key: "account", 
     width: 150,
-    filterOptions: store.transactionFilters.account,
+    filterOptions: accountFilter.value,
     filter: (value, row) => {
       return row.account === value
     }, 
@@ -178,7 +181,7 @@ const columns = [
       )
     }
   },
-];
+]);
 
 const pagination = reactive({
   page: 1,
@@ -300,6 +303,13 @@ const handleEditMultiple = (obj) => {
     checkedRowKeys.value.splice(0, checkedRowKeys.value.length);
   }
 }
+
+watch(() => store.transactions, () => {
+  store.createTransactionFilters();
+  categoryFilter.value = store.transactionFilters.category;
+  columns[5].filterOptions = categoryFilter.value;
+}, { deep: true });
+
 
 onMounted(()=> {
   store.fetchTransactions();
