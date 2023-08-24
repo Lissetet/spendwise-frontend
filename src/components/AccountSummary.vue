@@ -11,16 +11,15 @@
         </n-text>
         <div 
           v-if="!stat.label.includes('Net')" 
-          :class="`bg-neutral-${store.theme.name==='dark' ? '800' : '100'} w-px mx-6`"
+          style="background-color: var(--n-border-color)"
+          class="w-px mx-6"
         />
       </template>
     </div>
   </n-card>
-  <div class="h-0 w-0 bg-neutral-800 bg-neutral-100"/>
 </template>
 
 <script setup>
-import { computed } from "vue";
 import {  NStatistic, NCard, NText } from "naive-ui";
 import { formatCurrency } from "@/utils";
 

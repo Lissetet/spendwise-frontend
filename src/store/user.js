@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
 import axios from "axios"
+import { darkTheme, lightTheme, useOsTheme } from 'naive-ui'
 
 const baseURL = import.meta.env.VITE_BASE_URL;
 
 export default defineStore("user", {
   state: () => { return {
-      isDark: false,
-      theme: null,
+      theme: 'system',
       user: null,
       loading: true,
       categories: [],
@@ -43,12 +43,6 @@ export default defineStore("user", {
   actions: {
     setUser(user) {
       this.user = user;
-    },
-    setIsDark(isDark) {
-      this.isDark = isDark;
-    },
-    setTheme(theme) {
-      this.theme = theme;
     },
     async fetchCategories() {
       try {

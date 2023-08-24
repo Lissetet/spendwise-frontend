@@ -4,7 +4,6 @@
       bordered
       show-trigger
       collapse-mode="width"
-      :inverted="true"
       :collapsed-width="50"
       :width="200"
       :native-scrollbar="false"
@@ -12,7 +11,6 @@
       @collapse="collapsed = true"
       @expand="collapsed = false"
       class="h-screen py-4"
-      :style="store.theme.name === 'dark' ? '' : 'border-right: 1px solid #f2f2f6;'"
     >
       <n-menu 
         :collapsed-width="64" 

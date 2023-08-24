@@ -1,10 +1,10 @@
 
 
 <template>
-  <n-config-provider :theme="store.theme" :themeOverrides="themeOverrides">
+  <n-config-provider :theme="theme">
     <n-message-provider placement="bottom-right">
       <n-dialog-provider>
-        <div v-if="!isLoading && !isAuthenticated">
+        <div v-if="!isLoading && !isAuthenticated" style="background-color: var(--n-base-color)">
           <nav-bar :login="login" />
           <hero-intro :signUp="signUp" />
         </div>
@@ -18,7 +18,7 @@
 
 
 <script setup>
-import { watchEffect, watch } from 'vue';
+import { watchEffect, watch, computed } from 'vue';
 import { addIcon } from '@iconify/vue';
 import { useAuth0 } from '@auth0/auth0-vue';
 import useUserStore from '@/store/user';
@@ -28,6 +28,7 @@ import Content from '@/components/Content.vue';
 import { 
   darkTheme, 
   lightTheme, 
+  useOsTheme,
   NConfigProvider, 
   NMessageProvider, 
   NDialogProvider 
@@ -79,17 +80,14 @@ addIcon('spendwise', {
    height: 475,
 });
 
-const themeOverrides = {
-  common: {
-    invertedColor: '#fafafc',
-  },
-}
-
-store.setIsDark(window.matchMedia("(prefers-color-scheme: dark)").matches);
-store.setTheme(store.isDark ? darkTheme : lightTheme);
-
-window.matchMedia("(prefers-color-scheme: dark)").addEventListener('change', e => {
-  store.setIsDark(e.matches)
-  store.setTheme(store.isDark ? darkTheme : lightTheme);
+const theme = computed(() => {
+  if (store.theme === 'system') {
+    const osTheme = useOsTheme().value;
+    return osTheme === 'dark' ? darkTheme : lightTheme;
+  } else {
+    return store.theme === 'dark' ? darkTheme : lightTheme;
+  }
 });
+
+console.log(theme.value)
 </script>
