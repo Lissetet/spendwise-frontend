@@ -13,7 +13,11 @@
             v-if="year === item.year && month === item.month && date === item.day"
           >
             <n-tag :type="item.type">{{ item.tag }}</n-tag>
-            <n-dropdown :options="dropDownOptions.map(option => ({ ...option, id: item._id }))" @select="(key) => handleDropdownSelection(key, item._id)">
+            <n-dropdown 
+              class="capitalize"
+              :options="dropDownOptions.map(option => ({ ...option, id: item._id }))" 
+              @select="(key) => handleDropdownSelection(key, item._id)"
+            >
               <n-button text>
                 <Icon icon="mdi:dots-vertical" />
               </n-button>
@@ -28,41 +32,33 @@
 `<script setup>
 import { ref, h, onMounted } from "vue";
 import { Icon } from '@iconify/vue';
-import { NCalendar, NTag, NDropdown, NButton,  useMessage, useDialog } from "naive-ui";
+import { 
+  NCalendar, 
+  NTag, 
+  NDropdown, 
+  NButton,  
+  useMessage, 
+  useDialog 
+} from "naive-ui";
 import EventModal from '@/components/EventModal.vue';
 import useUserStore from '@/store/user';
-const store = useUserStore();
 
+const store = useUserStore();
 const message = useMessage();
 const dialog = useDialog();
 const modal = ref(null);
 
-
-const openEventModal = (title, event) => {
-  modal.value.openModal(title, event)
+const openEventModal = (event) => {
+  modal.value.openModal(event)
 };
 
-defineExpose({ openEventModal });
-
 const renderIcon = icon => () => h(Icon, { icon });
-
-const dropDownOptions = [
-  {
-    label: "Edit",
-    icon: renderIcon("mdi:edit"),
-    key: "edit",
-  },
-  {
-    label: "Delete",
-    icon: renderIcon("mdi:delete"),
-    key: "delete",
-  },
-];
+const getOption = (key) => ({ key, label: key, icon: renderIcon(`mdi:${key}`) });
+const dropDownOptions = ['edit', 'delete'].map(getOption);
 
 const handleEdit = (id) => {
   const index = store.events.findIndex((item) => item._id === id);
   const { year, month, day, tag, type } = store.events[index];
-
   const event = {
     date: new Date(year, month - 1, day),
     tag,
@@ -70,7 +66,7 @@ const handleEdit = (id) => {
     id
   }
 
-  modal.value.openModal("Edit Event", event);
+  modal.value.openModal(event);
 };
 
 const handleDropdownSelection = (key, id) => {
@@ -133,4 +129,6 @@ const handleDelete = (id) => {
 onMounted(() => {
   store.fetchEvents();
 });
+
+defineExpose({ openEventModal });
 </script>

@@ -1,16 +1,16 @@
 <template>
   <n-button quaternary @click="showFeedbackModal = true">
-    <Icon icon="uil:comment" class="pr-2"/>
+    <Icon icon="mdi:feedback-outline" class="pr-2"/>
     <span>Leave Feedback</span>
   </n-button>
   <n-modal v-model:show="showFeedbackModal">
     <n-card
       title=" "
-      style="width: 600px"
       :bordered="false"
       size="huge"
       role="dialog"
       aria-modal="true"
+      class=" w-11/12 max-w-xl"
     >
       <template #header-extra>
         <n-button text @click="showFeedbackModal = false">
@@ -24,18 +24,16 @@
           size="large" 
           clearable 
           :count="10"
-          @update:value="(v)=>selectedStars = v"
+          @update:value="(v)=>model.selectedStars = v"
         />
         <n-form
           ref="formRef"
           label-width="auto"
-          :style="{
-            maxWidth: '640px'
-          }"
+          class="max-w-xl"
         >
-          <n-form-item path="messageValue">
+          <n-form-item path="model.message">
             <n-input
-              v-model:value="messageValue"
+              v-model:value="model.message"
               placeholder="Leave a message"
               type="textarea"
               :autosize="{
@@ -72,15 +70,29 @@
 </template>
 
 <script setup>
-import { useAuth0 } from '@auth0/auth0-vue';
-const { user } = useAuth0();
-import axios from "axios";
-const baseURL = import.meta.env.VITE_BASE_URL;
-
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { Icon } from '@iconify/vue'
-import { NButton, NModal, NRate, NFormItem, NCard, NInput, NForm, NAlert } from 'naive-ui';
+import { 
+  NButton, 
+  NModal, 
+  NRate, 
+  NFormItem, 
+  NCard, 
+  NInput, 
+  NForm, 
+  NAlert 
+} from 'naive-ui';
+import axios from "axios";
+import useUserStore from '@/store/user';
+
+const store = useUserStore();
+const baseURL = import.meta.env.VITE_BASE_URL;
 const showFeedbackModal = ref(false)
+const emptyData = {
+  message: null,
+  selectedStars: null,
+}
+const model = ref(null)
 const selectedStars = ref(null);
 const messageValue = ref(null);
 const showErrorAlert = ref(false);
@@ -89,9 +101,9 @@ const errorMessage = ref('Please select a rating.');
 
 const sendFeedback = async () => {
   const feedback = {
-    user: user._rawValue.sub,
-    rating: selectedStars.value,
-    message: messageValue.value || 'No message',
+    user: store.user.sub,
+    rating: model.value.selectedStars,
+    message: model.value.message || 'No message',
     type: 'feedback'
   }
   if(feedback.rating === null) {
@@ -102,12 +114,11 @@ const sendFeedback = async () => {
   } else {
     axios.post(`${baseURL}/messages`, feedback)
       .then((res) => {
-        selectedStars.value = null;
-        messageValue.value = null;
         showSuccessAlert.value = true;
         setTimeout(() => {
           showSuccessAlert.value = false;
           showFeedbackModal.value = false;
+          model.value = emptyData;
         }, 3000);
       })
       .catch((err) => {
@@ -116,4 +127,8 @@ const sendFeedback = async () => {
       })
   }
 }
+
+onMounted(() => {
+  model.value = emptyData;
+})
 </script>

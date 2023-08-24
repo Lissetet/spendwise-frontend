@@ -1,5 +1,5 @@
 <template>
-  <section :style="store.isDark ? darkBgStyle : lightBgStyle">
+  <section :style="store.theme.name === 'dark' ? darkBgStyle : lightBgStyle">
     <div class="container gap-10 flex-wrap">
       <div class="">
         <h1 class="font-extrabold text-4xl">

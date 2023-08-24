@@ -16,7 +16,12 @@
       <n-input-group class="mb-8">
         <n-date-picker v-model:value="model.date" type="date" class="w-80"/>
         <n-input v-model:value="model.tag" type="text" placeholder="Event Name" />
-        <n-select v-model:value="model.type" :options="typeOptions" :render-tag="renderTag" class="w-64"/>
+        <n-select 
+          v-model:value="model.type" 
+          :options="typeOptions" 
+          :render-tag="renderTag" 
+          class="w-64"
+        />
       </n-input-group>
       <n-input-group class="mx-auto">
         <n-button type="primary" @click="onSave">Save</n-button>
@@ -28,7 +33,16 @@
 
 <script setup>
 import { ref, h } from "vue";
-import { NButton, NModal, NCard, NInputGroup, NDatePicker, NSelect, NInput, NTag } from 'naive-ui';
+import { 
+  NButton, 
+  NModal, 
+  NCard,
+  NInputGroup, 
+  NDatePicker, 
+  NSelect, 
+  NInput, 
+  NTag 
+} from 'naive-ui';
 import { Icon } from '@iconify/vue';
 
 const emit = defineEmits(['handle-save']);
@@ -43,8 +57,8 @@ const model = ref({
   type: null,
 })
 
-const openModal = (modalTitle, event) => {
-  title.value = modalTitle;
+const openModal = event => {
+  title.value = event ? 'Edit Event' : 'Add New Event';
   if (event) {
     editingId.value = event.id;
     model.value.date = event.date;
@@ -59,8 +73,6 @@ const openModal = (modalTitle, event) => {
 const closeModal = () => {
   showEventModal.value = false;
 };
-
-defineExpose({ openModal, closeModal });
 
 const renderTag = ({ option }) => {
   return h(
@@ -101,4 +113,6 @@ const onSave = () => {
   };
   emit("handle-save", event, !!editingId.value);
 };
+
+defineExpose({ openModal, closeModal });
 </script>

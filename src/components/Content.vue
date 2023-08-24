@@ -12,7 +12,7 @@
       @collapse="collapsed = true"
       @expand="collapsed = false"
       class="h-screen py-4"
-      :style="store.isDark ? '' : 'border-right: 1px solid #f2f2f6;'"
+      :style="store.theme.name === 'dark' ? '' : 'border-right: 1px solid #f2f2f6;'"
     >
       <n-menu 
         :collapsed-width="64" 
@@ -20,7 +20,7 @@
       />
     </n-layout-sider>
     <n-layout content-style="padding: 1rem 2rem">
-      <n-space class="flex gap-20 w-full -mb-3 text-xs" justify="end" align="center">
+      <n-space class="-mb-3" justify="end" align="center">
         <div>
           <feedback-modal />
           <!-- <n-button quaternary>
@@ -28,6 +28,7 @@
             Notifications
           </n-button> -->
           <contact-modal />
+          <theme-switcher />
         </div>
       </n-space>
       <n-divider />
@@ -52,7 +53,8 @@ import {
   NText 
 } from 'naive-ui';
 import FeedbackModal from '@/components/FeedbackModal.vue';
-import ContactModal from './ContactModal.vue';
+import ContactModal from '@/components/ContactModal.vue';
+import ThemeSwitcher from '@/components/ThemeSwitcher.vue';
 
 import useUserStore from '@/store/user';
 const store = useUserStore();

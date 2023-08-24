@@ -8,8 +8,8 @@
     :data="store.accountNestedData"
     :row-class-name="row => row.children && 'font-bold'"
     :summary="createSummary"
-    :row-key="row => row._id ? row._id : row.key"
-    default-expand-all
+    :row-key="row => row._id ? row._id : row.name"
+    default-expand-none
   />
 </template>
 
