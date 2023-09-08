@@ -1,7 +1,7 @@
 <template>
   <n-button quaternary @click="showContactModal = true">
-    <Icon icon="material-symbols:help-outline" class="pr-2"/>
-    Contact
+    <Icon icon="material-symbols:help-outline"/>
+    <span class="hidden sm:block pl-2">Contact</span>
   </n-button>
   <n-modal v-model:show="showContactModal">
     <n-card

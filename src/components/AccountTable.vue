@@ -37,11 +37,11 @@ const columns = reactive([
   {
     title: "Balance",
     key: "balance",
-    width: 200,
     align: "center",
     render: (row) => {
         return h(
           'span',
+          { class: 'text-xs' },
           formatCurrency(row.balance)
         );
     }
@@ -50,7 +50,7 @@ const columns = reactive([
     title: "",
     key: "actions",
     align: "center",
-    width: 75,
+    width: 40,
     render(row) {
       const renderIcon = icon => () => h(Icon, { icon });
       const getOption = (key) => ({ key, label: key, icon: renderIcon(`mdi:${key}`) });
@@ -66,7 +66,7 @@ const columns = reactive([
           onSelect: handleDropdownSelection,
         },
         {
-          default: renderIcon('mdi:settings'),
+          default: renderIcon('mdi:dots-vertical'),
         }
       )
       return row.children ? null : element;

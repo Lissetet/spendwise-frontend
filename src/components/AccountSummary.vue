@@ -1,6 +1,6 @@
 <template>
   <n-card class="w-fit">
-    <div class="flex">
+    <div class="flex flex-wrap">
       <template v-for="stat in stats">
         <n-text type="primary">
         <n-statistic  :label="stat.label" class="capitalize">
@@ -12,7 +12,7 @@
         <div 
           v-if="!stat.label.includes('Net')" 
           style="background-color: var(--n-border-color)"
-          class="w-px mx-6"
+          class="vertical-divider"
         />
       </template>
     </div>
@@ -36,3 +36,10 @@ const stats = keys.map((key) => {
   }
 })
 </script>
+
+<style>
+.vertical-divider {
+  @apply w-px mx-5;
+  background-color: var(--n-border-color);
+}
+</style>

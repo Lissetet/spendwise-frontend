@@ -88,6 +88,4 @@ const theme = computed(() => {
     return store.theme === 'dark' ? darkTheme : lightTheme;
   }
 });
-
-console.log(theme.value)
 </script>

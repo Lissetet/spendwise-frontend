@@ -15,7 +15,7 @@
       </template>
       <n-input-group class="mb-8">
         <n-date-picker v-model:value="model.date" type="date" class="w-80"/>
-        <n-input v-model:value="model.tag" type="text" placeholder="Event Name" />
+        <n-input v-model:value="model.tag" type="text" placeholder="Event Name" maxlength="20" />
         <n-select 
           v-model:value="model.type" 
           :options="typeOptions" 

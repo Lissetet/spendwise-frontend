@@ -1,7 +1,7 @@
 <template>
   <n-button quaternary @click="showFeedbackModal = true">
-    <Icon icon="mdi:feedback-outline" class="pr-2"/>
-    <span>Leave Feedback</span>
+    <Icon icon="mdi:feedback-outline"/>
+    <span class="hidden sm:block pl-2">Leave Feedback</span>
   </n-button>
   <n-modal v-model:show="showFeedbackModal">
     <n-card

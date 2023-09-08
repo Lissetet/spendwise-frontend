@@ -3,58 +3,75 @@
     ref="modal"
     @handle-save="handleSave"
   />
-  <n-calendar>
+  <n-calendar v-if="store.isLarge">
     <template #default="{ year, month, date }">
-      <div class="flex flex-col gap-1">
-        <template v-for="item in store.events">
-          <div 
-            :key="item._id"
-            class="flex gap-2" 
-            v-if="year === item.year && month === item.month && date === item.day"
-          >
-            <n-tag :type="item.type">{{ item.tag }}</n-tag>
-            <n-dropdown 
-              class="capitalize"
-              :options="dropDownOptions.map(option => ({ ...option, id: item._id }))" 
-              @select="(key) => handleDropdownSelection(key, item._id)"
-            >
-              <n-button text>
-                <Icon icon="mdi:dots-vertical" />
-              </n-button>
-            </n-dropdown>
-          </div>
-        </template>
+      <div class="events flex flex-col gap-1 -m-1">
+        <EventTag 
+          v-for="item in store.events" 
+          :key="item._id" 
+          :item="item" 
+          :year="year" 
+          :month="month" 
+          :date="date" 
+          @dropdown-selected="handleDropdownSelection"
+        />
       </div>
     </template>
   </n-calendar>
+  <n-el v-if="!store.isLarge" class="date-picker-wrapper">
+    <n-date-picker
+      panel
+      type="date"
+      :is-date-disabled="dateDisabled"
+      :actions="[]"
+      v-model:value="dateValue"
+      @update-value="handleSelect"
+      style="border: 1px solid var(--divider-color);"
+    />
+    <div class="flex flex-col gap-4 my-4">
+      <template v-for="event in events">
+        <n-tag :bordered="false" :type="event.type" size="large" :style="{width: '290px'}">
+          {{ event.tag }}
+        </n-tag>
+      </template>
+    </div>
+  </n-el>
 </template>
 
-`<script setup>
-import { ref, h, onMounted } from "vue";
-import { Icon } from '@iconify/vue';
+<script setup>
+import { ref, h } from "vue";
 import { 
   NCalendar, 
   NTag, 
-  NDropdown, 
-  NButton,  
+  NDatePicker, 
+  NEl,
   useMessage, 
-  useDialog 
+  useDialog
 } from "naive-ui";
 import EventModal from '@/components/EventModal.vue';
+import EventTag from '@/components/EventTag.vue';
 import useUserStore from '@/store/user';
 
 const store = useUserStore();
 const message = useMessage();
 const dialog = useDialog();
 const modal = ref(null);
+const dateValue = ref(null);
+const events = ref([]);
+
+const datesMap = store.events.reduce((acc, event) => {
+  if (!acc[event.timestamp]) {
+    acc[event.timestamp] = [];
+  }
+  acc[event.timestamp].push(event);
+  return acc;
+}, {});
+
+const dateDisabled = (ts) => !datesMap[ts];
 
 const openEventModal = (event) => {
   modal.value.openModal(event)
 };
-
-const renderIcon = icon => () => h(Icon, { icon });
-const getOption = (key) => ({ key, label: key, icon: renderIcon(`mdi:${key}`) });
-const dropDownOptions = ['edit', 'delete'].map(getOption);
 
 const handleEdit = (id) => {
   const index = store.events.findIndex((item) => item._id === id);
@@ -65,7 +82,6 @@ const handleEdit = (id) => {
     type,
     id
   }
-
   modal.value.openModal(event);
 };
 
@@ -86,9 +102,12 @@ const getYearMonthDate = (date) => {
 
 const handleSave = (newEvent, editing) => {
   const { date, tag, type } = newEvent;
+  const timestamp = new Date(date).getTime();
+  console.log('timestamp', timestamp)
   const dateObj = getYearMonthDate(new Date(date));
   const editedDateObj = {
     ...dateObj,
+    timestamp,
     tag,
     type
   }
@@ -126,9 +145,50 @@ const handleDelete = (id) => {
   });
 };
 
-onMounted(() => {
-  store.fetchEvents();
-});
+const handleSelect = (date) => {
+  events.value = datesMap[date];
+};
 
 defineExpose({ openEventModal });
 </script>
+
+<style>
+.n-calendar-cell.n-calendar-cell--current>.n-calendar-date>.n-calendar-date__date {
+  @apply h-4 w-4;
+}
+
+.date-picker-wrapper .n-date-panel-calendar {
+  background: var(--card-color) !important;
+}
+
+.date-picker-wrapper .n-date-panel .n-date-panel-dates .n-date-panel-date.n-date-panel-date--disabled {
+  font-weight: 400;
+}
+
+.date-picker-wrapper .n-date-panel .n-date-panel-dates .n-date-panel-date {
+  font-weight: 900;
+  padding-bottom: .25rem;
+}
+
+.date-picker-wrapper .n-date-panel .n-date-panel-dates .n-date-panel-date::after {
+  content: '.';
+  position: absolute;
+  top: .5rem;
+}
+
+.date-picker-wrapper .n-date-panel .n-date-panel-dates .n-date-panel-date.n-date-panel-date--disabled::after {
+  content: '';
+}
+
+.date-picker-wrapper .n-date-panel .n-date-panel-dates .n-date-panel-date.n-date-panel-date--selected {
+  background: var(--n-item-color-active);
+}
+
+.date-picker-wrapper .n-date-panel-date.n-date-panel-date--current>.n-date-panel-date__sup{
+  display: none;
+}
+
+.date-picker-wrapper .n-date-panel.n-date-panel--date {
+  transform-origin: top left;
+}
+</style>

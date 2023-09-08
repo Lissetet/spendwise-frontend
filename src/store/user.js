@@ -7,6 +7,7 @@ const baseURL = import.meta.env.VITE_BASE_URL;
 export default defineStore("user", {
   state: () => { return {
       theme: 'system',
+      isLarge: true,
       user: null,
       loading: true,
       categories: [],

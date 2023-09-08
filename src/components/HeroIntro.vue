@@ -17,19 +17,19 @@
       <img src="@/assets/laptop.png" alt="laptop" class=" w-96 opacity-80" />
     </div>
   </section>
-  <n-card type="primary"
-    style="background-color: var(--n-color-target)"
+  <n-el type="primary"
+    style="background-color: var(--primary-color)"
     class="flex w-full h-20 text-center"
   >
-    <n-text class="font-extrabold text-lg">
+    <n-text class="font-extrabold text-lg m-auto">
       Learn why Spendwise is the best way to manage your money.
     </n-text>
-  </n-card>
+  </n-el>
 </template>
 
 <script setup>
 import { computed } from 'vue';
-import { NButton, NText, useOsTheme, NH2, NCard } from 'naive-ui';
+import { NButton, NText, useOsTheme, NH2, NEl } from 'naive-ui';
 import useUserStore from '@/store/user';
 const store = useUserStore();
 

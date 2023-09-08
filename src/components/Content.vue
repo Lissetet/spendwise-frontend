@@ -2,23 +2,21 @@
   <n-layout has-sider position="absolute">
     <n-layout-sider
       bordered
-      show-trigger
+      :show-trigger="false"
       collapse-mode="width"
-      :collapsed-width="50"
+      :collapsed-width="0"
       :width="200"
       :native-scrollbar="false"
-      :collapsed="collapsed"
-      @collapse="collapsed = true"
-      @expand="collapsed = false"
+      :collapsed="!store.isLarge"
       class="h-screen py-4"
     >
-      <n-menu 
-        :collapsed-width="64" 
-        :options="menuNavOptions" 
-      />
+      <n-menu :options="menuNavOptions" />
     </n-layout-sider>
-    <n-layout content-style="padding: 1rem 2rem">
-      <n-space class="-mb-3" justify="end" align="center">
+    <n-layout content-style="padding: 1rem 1.5rem">
+      <n-space class="-mb-3" justify="space-between" align="center">
+        <div>
+          <mobile-menu v-if="!store.isLarge" :logout="logout" />
+        </div>
         <div>
           <feedback-modal />
           <!-- <n-button quaternary>
@@ -48,24 +46,22 @@ import {
   NLayoutSider,
   NSpace, 
   NMenu, 
-  NText 
+  NText,
 } from 'naive-ui';
 import FeedbackModal from '@/components/FeedbackModal.vue';
 import ContactModal from '@/components/ContactModal.vue';
 import ThemeSwitcher from '@/components/ThemeSwitcher.vue';
+import MobileMenu from '@/components/MobileMenu.vue';
 
 import useUserStore from '@/store/user';
 const store = useUserStore();
 
 const { logout } = useAuth0();
-const collapsed = ref(false);
-
-// const toggleCollapse = () => {
-//   collapsed.value = !collapsed.value;
-// };
 
 const checkWindowSize = () => {
-  collapsed.value = window.innerWidth < 1024;
+  store.isLarge = window.innerWidth > 1024;
+  const scaleFactor = store.isLarge ? 1 : Math.min(window.innerWidth / 322 * 0.85, 1.5);
+  document.documentElement.style.setProperty('--event-scale-factor', scaleFactor);
 };
 
 onMounted(() => {
