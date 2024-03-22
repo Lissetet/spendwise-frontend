@@ -25,15 +25,21 @@ import { formatCurrency } from "@/utils";
 
 import useUserStore from '@/store/user';
 const store = useUserStore();
+let total = 0;
 
-const keys = ["cash", "debt", "investments", "property", "all"]
-
+const keys = ["cash", "debt", "investments", "property"]
 
 const stats = keys.map((key) => {
+  total += store.accountTotalValues[key];
   return {
-    label: key === "all" ? "Net Total" : `Total ${key}`,
+    label: `Total ${key}`,
     value: store.accountTotalValues[key],
   }
+})
+
+stats.push({
+  label: "Net Total",
+  value: total
 })
 </script>
 
