@@ -134,6 +134,12 @@ export default defineStore("user", {
       }
 
       const isCash = (account) => types.cash.includes(account.type);
+
+      // Initialize allCash if it doesn't exist
+      if (!this.accountTypes.allCash) {
+        this.accountTypes.allCash = { children: [] };
+      }
+      
       this.accountTypes.allCash.children = this.accounts.filter(({type}) => isCash({type}));
     },
     async addAccount(data) {
