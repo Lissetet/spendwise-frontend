@@ -139,8 +139,9 @@ export default defineStore("user", {
       if (!this.accountTypes.allCash) {
         this.accountTypes.allCash = { children: [] };
       }
-      
+
       this.accountTypes.allCash.children = this.accounts.filter(({type}) => isCash({type}));
+      this.accountTypes.allCash.balance = this.accountTypes.allCash.children.reduce((acc, account) => acc + account.balance, 0);
     },
     async addAccount(data) {
       const accountBody = {
